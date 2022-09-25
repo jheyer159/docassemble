@@ -4,10 +4,9 @@ from docassemble.base.util import Individual, Person, DAObject, DAFileList, DAFi
 # Import the SQLObject and some associated utility functions
 from docassemble.base.sql import alchemy_url, upgrade_db, SQLObject, SQLObjectRelationship, StandardRelationshipList, connect_args
 # Import SQLAlchemy names
-from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, create_engine, or_, and_
+from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, sessionmaker
-import sys
+from sqlalchemy.orm import sessionmaker
 
 # Only allow these names (DAObject classes) to be imported with a modules block
 __all__ = ['Company', 'Shareholder', 'CompanyShareholder', 'Lawsuit', 'CompanyLawsuit', 'Document', 'LawsuitDocument', 'StandardRelationshipList']
@@ -15,13 +14,17 @@ __all__ = ['Company', 'Shareholder', 'CompanyShareholder', 'Lawsuit', 'CompanyLa
 # Create the base class for SQLAlchemy table definitions
 Base = declarative_base()
 
+
 # SQLAlchemy table definition for a Company
+
 class CompanyModel(Base):
     __tablename__ = 'company'
     id = Column(Integer, primary_key=True)
     name = Column(String(250))
 
+
 # SQLAlchemy table definition for a Shareholder
+
 class ShareholderModel(Base):
     __tablename__ = 'shareholder'
     id = Column(Integer, primary_key=True)
@@ -37,14 +40,18 @@ class ShareholderModel(Base):
     start_date = Column(DateTime)
     end_date = Column(DateTime)
 
+
 # SQLAlchemy table definition for keeping track of which Companies have which Shareholders
+
 class CompanyShareholderModel(Base):
     __tablename__ = 'company_shareholder'
     id = Column(Integer, primary_key=True)
     company_id = Column(Integer, ForeignKey('company.id', ondelete='CASCADE'), nullable=False)
     shareholder_id = Column(Integer, ForeignKey('shareholder.id', ondelete='CASCADE'), nullable=False)
 
+
 # SQLAlchemy table definition for a Lawsuit
+
 class LawsuitModel(Base):
     __tablename__ = 'lawsuit'
     id = Column(Integer, primary_key=True)
@@ -54,14 +61,18 @@ class LawsuitModel(Base):
     plaintiff_last_name = Column(String(250))
     filing_date = Column(DateTime)
 
+
 # SQLAlchemy table definition for keeping track of which Companies have which Lawsuits
+
 class CompanyLawsuitModel(Base):
     __tablename__ = 'company_lawsuit'
     id = Column(Integer, primary_key=True)
     company_id = Column(Integer, ForeignKey('company.id', ondelete='CASCADE'), nullable=False)
     lawsuit_id = Column(Integer, ForeignKey('lawsuit.id', ondelete='CASCADE'), nullable=False)
 
+
 # SQLAlchemy table definition for a Document
+
 class DocumentModel(Base):
     __tablename__ = 'document'
     id = Column(Integer, primary_key=True)
@@ -72,7 +83,9 @@ class DocumentModel(Base):
     extension = Column(String(250))
     mimetype = Column(String(250))
 
+
 # SQLAlchemy table definition for keeping track of which Lawsuits have which Documents
+
 class LawsuitDocumentModel(Base):
     __tablename__ = 'lawsuit_document'
     id = Column(Integer, primary_key=True)
@@ -101,60 +114,77 @@ upgrade_db(url, __file__, engine)
 # Create a connection to the SQL database, which will be used by the following classes.
 DBSession = sessionmaker(bind=engine)()
 
+
 # Python class for a Company
+
 class Company(Person, SQLObject):
     _model = CompanyModel
     _session = DBSession
     _required = ['name']
     _uid = 'name'
+
     def init(self, *pargs, **kwargs):
         super().init(*pargs, **kwargs)
         self.sql_init()
+
     def db_get(self, column):
         if column == 'name':
             return self.name.text
+        raise Exception("Invalid column " + column)
+
     def db_set(self, column, value):
         if column == 'name':
             self.name.text = value
+        else:
+            raise Exception("Invalid column " + column)
+
     def db_null(self, column):
         if column == 'name':
             del self.name.text
+        else:
+            raise Exception("Invalid column " + column)
+
 
 # Python class for a Shareholder
+
 class Shareholder(Individual, SQLObject):
     _model = ShareholderModel
     _session = DBSession
     _required = ['first_name', 'ssn']
     _uid = 'ssn'
+
     def init(self, *pargs, **kwargs):
         super().init(*pargs, **kwargs)
         # The attribute "active" is not stored in SQL.  The default is True but it is
         # set to False by the db_set() function if the value in SQL is null.
         self.active = True
         self.sql_init()
+
     def db_get(self, column):
         if column == 'ssn':
             return self.ssn
-        elif column == 'first_name':
+        if column == 'first_name':
             return self.name.first
-        elif column == 'last_name':
+        if column == 'last_name':
             return self.name.last
-        elif column == 'address':
+        if column == 'address':
             return self.address.address
-        elif column == 'unit':
+        if column == 'unit':
             return self.address.unit
-        elif column == 'city':
+        if column == 'city':
             return self.address.city
-        elif column == 'state':
+        if column == 'state':
             return self.address.state
-        elif column == 'zip':
+        if column == 'zip':
             return self.address.zip
-        elif column == 'shares':
+        if column == 'shares':
             return self.shares
-        elif column == 'start_date':
+        if column == 'start_date':
             return self.start_date
-        elif column == 'end_date':
+        if column == 'end_date':
             return self.end_date
+        raise Exception("Invalid column " + column)
+
     def db_set(self, column, value):
         if column == 'ssn':
             self.ssn = value
@@ -181,6 +211,9 @@ class Shareholder(Individual, SQLObject):
         elif column == 'end_date':
             self.end_date = as_datetime(value)
             self.active = False
+        else:
+            raise Exception("Invalid column " + column)
+
     def db_null(self, column):
         if column == 'ssn':
             del self.ssn
@@ -204,39 +237,50 @@ class Shareholder(Individual, SQLObject):
             del self.start_date
         elif column == 'end_date':
             del self.end_date
+        else:
+            raise Exception("Invalid column " + column)
+
 
 # Python class for a relationship between a Company and a Shareholder
+
 class CompanyShareholder(DAObject, SQLObjectRelationship):
     _model = CompanyShareholderModel
     _session = DBSession
     _parent = [Company, 'company', 'company_id']
     _child = [Shareholder, 'shareholder', 'shareholder_id']
+
     def init(self, *pargs, **kwargs):
         super().init(*pargs, **kwargs)
         self.rel_init(*pargs, **kwargs)
 
+
 # Python class for a lawsuit
+
 class Lawsuit(Individual, SQLObject):
     _model = LawsuitModel
     _session = DBSession
     _required = ['docket_number', 'court']
+
     def init(self, *pargs, **kwargs):
         super().init(*pargs, **kwargs)
         # A lawsuit needs a plaintiff, so the "plaintiff" attribute is
         # initialized when the object itself is initialized.
         self.initializeAttribute('plaintiff', Individual)
         self.sql_init()
+
     def db_get(self, column):
         if column == 'court':
             return self.court
-        elif column == 'docket_number':
+        if column == 'docket_number':
             return self.docket_number
-        elif column == 'plaintiff_first_name':
+        if column == 'plaintiff_first_name':
             return self.plaintiff.name.first
-        elif column == 'plaintiff_last_name':
+        if column == 'plaintiff_last_name':
             return self.plaintiff.name.last
-        elif column == 'filing_date':
+        if column == 'filing_date':
             return self.filing_date
+        raise Exception("Invalid column " + column)
+
     def db_set(self, column, value):
         if column == 'court':
             self.court = value
@@ -248,6 +292,9 @@ class Lawsuit(Individual, SQLObject):
             self.plaintiff.name.last = value
         elif column == 'filing_date':
             self.filing_date = as_datetime(value)
+        else:
+            raise Exception("Invalid column " + column)
+
     def db_null(self, column):
         if column == 'court':
             del self.court
@@ -259,46 +306,58 @@ class Lawsuit(Individual, SQLObject):
             del self.plaintiff.name.last
         elif column == 'filing_date':
             del self.filing_date
+        else:
+            raise Exception("Invalid column " + column)
     # Since the unique identifier for a lawsuit isn't really the docket number, but the combination of the
     # court and the docket number, we use a db_find_existing method.
+
     def db_find_existing(self):
         try:
             return self._session.query(LawsuitModel).filter(LawsuitModel.court == self.court, LawsuitModel.docket_number == self.docket_number).first()
         except:
             return None
 
+
 # Python class for a relationship between a Company and a Lawsuit
+
 class CompanyLawsuit(DAObject, SQLObjectRelationship):
     _model = CompanyLawsuitModel
     _session = DBSession
     _parent = [Company, 'company', 'company_id']
     _child = [Lawsuit, 'lawsuit', 'lawsuit_id']
+
     def init(self, *pargs, **kwargs):
         super().init(*pargs, **kwargs)
         self.rel_init(*pargs, **kwargs)
 
+
 # Python class for a document in a lawsuit
+
 class Document(Thing, SQLObject):
     _model = DocumentModel
     _session = DBSession
     _required = ['name', 'upload_id', 'filename', 'extension', 'mimetype', 'upload_id']
     _uid = 'upload_id'
+
     def init(self, *pargs, **kwargs):
         super().init(*pargs, **kwargs)
         self.sql_init()
+
     def db_get(self, column):
         if column == 'name':
             return self.name.text
-        elif column == 'upload_id':
+        if column == 'upload_id':
             return self.upload[0].number
-        elif column == 'date':
+        if column == 'date':
             return self.date
-        elif column == 'filename':
+        if column == 'filename':
             return self.upload[0].filename
-        elif column == 'extension':
+        if column == 'extension':
             return self.upload[0].extension
-        elif column == 'mimetype':
+        if column == 'mimetype':
             return self.upload[0].mimetype
+        raise Exception("Invalid column " + column)
+
     def ensure_upload_exists(self):
         # Since file uploads are a special type of object in Docassemble,
         # we need to make sure the object exists before we can populate
@@ -308,6 +367,7 @@ class Document(Thing, SQLObject):
         if not hasattr(self, 'upload'):
             self.initializeAttribute('upload', DAFileList)
             self.upload.appendObject(DAFile)
+
     def db_set(self, column, value):
         if column == 'name':
             self.name.text = value
@@ -331,12 +391,17 @@ class Document(Thing, SQLObject):
         elif column == 'mimetype':
             self.ensure_upload_exists()
             self.upload[0].mimetype = value
+        else:
+            raise Exception("Invalid column " + column)
+
     def db_null(self, column):
         if column == 'name':
             del self.name.text
         elif column == 'upload_id':
             del self.upload[0].number
             self.upload[0].ok = False
+            if hasattr(self.upload[0], 'initialized'):
+                del self.upload[0].initialized
         elif column == 'date':
             del self.date
         elif column == 'filename':
@@ -346,13 +411,18 @@ class Document(Thing, SQLObject):
             del self.upload[0].extension
         elif column == 'mimetype':
             del self.upload[0].mimetype
+        else:
+            raise Exception("Invalid column " + column)
+
 
 # Python class for a relationship between a Lawsuit and a Document
+
 class LawsuitDocument(DAObject, SQLObjectRelationship):
     _model = LawsuitDocumentModel
     _session = DBSession
     _parent = [Lawsuit, 'lawsuit', 'lawsuit_id']
     _child = [Document, 'document', 'document_id']
+
     def init(self, *pargs, **kwargs):
         super().init(*pargs, **kwargs)
         self.rel_init(*pargs, **kwargs)

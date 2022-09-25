@@ -5,7 +5,7 @@
 {%- set extra_js = get_part('register page extra javascript') %}
 {%- extends 'flask_user/public_base.html' %}
 {%- block content %}
-{%- from "base_templates/form_macros.html" import render_field, render_submit_field, myrender_hidden_field %}
+{%- from "base_templates/form_macros.html" import render_field, render_submit_field, render_select_field, myrender_hidden_field %}
           <h1>{{ get_part('register page heading', word('Register')) }}</h1>
 {{ get_part('register page pre') }}
           {%- if user_manager.enable_register %}
@@ -15,11 +15,39 @@
 <p>{{ word("Already registered?") }} <a href="{{ url_for('user.login') }}">{{ word("Sign in.") }}</a></p>
           {%- endif %}
           {%- endif %}
+          {%- if config['USE_PASSWORD_LOGIN'] or ('admin' in request.args and request.args['admin'] == '1') %}
           <form action="" method="POST" novalidate formnovalidate class="form" role="form">
             {{ form.hidden_tag() }}
+            {%- if 'first_name' in config['USER_PROFILE_FIELDS'] %}
+            {{ render_field(form.first_name) }}
+            {%- endif %}
+            {%- if 'last_name' in config['USER_PROFILE_FIELDS'] %}
+            {{ render_field(form.last_name) }}
+            {%- endif %}
+            {%- if 'country' in config['USER_PROFILE_FIELDS'] %}
+            {{ render_field(form.country) }}
+            {%- endif %}
+            {%- if 'subdivisionfirst' in config['USER_PROFILE_FIELDS'] %}
+            {{ render_field(form.subdivisionfirst) }}
+            {%- endif %}
+            {%- if 'subdivisionsecond' in config['USER_PROFILE_FIELDS'] %}
+            {{ render_field(form.subdivisionsecond) }}
+            {%- endif %}
+            {%- if 'subdivisionthird' in config['USER_PROFILE_FIELDS'] %}
+            {{ render_field(form.subdivisionthird) }}
+            {%- endif %}
+            {%- if 'organization' in config['USER_PROFILE_FIELDS'] %}
+            {{ render_field(form.organization) }}
+            {%- endif %}
+            {%- if 'language' in config['USER_PROFILE_FIELDS'] %}
+            {{ render_field(form.language) }}
+            {%- endif %}
+            {%- if 'timezone' in config['USER_PROFILE_FIELDS'] %}
+            {{ render_select_field(form.timezone) }}
+            {%- endif %}
             {%- set field = form.username if user_manager.enable_username else form.email %}
-            <div class="form-group">
-              <label for="{{ field.id }}" class="control-label">{{ field.label.text }}</label>
+            <div class="da-form-group">
+              <label for="{{ field.id }}" class="form-label">{{ field.label.text }}</label>
               {{ field(class_="form-control", type="email") }}
               {%- if field.errors %}
                 {%- for e in field.errors %}
@@ -34,14 +62,14 @@
             {%- if user_manager.enable_retype_password %}
             {{ render_field(form.retype_password) }}
             {%- endif %}
-            {{ myrender_hidden_field(form.social_id, value=user_manager.random_social()) }}
             <br>
             {{ get_part('register page submit') }}<div class="form-actions">
               {{ render_submit_field(form.submit) }}
             </div>
           </form>
           {%- if config['USE_GOOGLE_LOGIN'] or config['USE_FACEBOOK_LOGIN'] or config['USE_TWITTER_LOGIN'] or config['USE_AUTH0_LOGIN'] or config['USE_AZURE_LOGIN'] or config['USE_PHONE_LOGIN'] %}
-          <p style="padding: 15px 15px 5px 15px;"><strong>or</strong></p>
+          <p style="padding: 15px 15px 5px 15px;"><strong>{{ word('or') }}</strong></p>
+          {%- endif %}
           {%- endif %}
           {%- if config['USE_PHONE_LOGIN'] %}
           <div class="row danomargin">

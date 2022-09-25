@@ -13,6 +13,31 @@ Feature: Example interviews
   #   And I wait 2 seconds
   #   Then I should see the phrase "Here is the file you uploaded"
 
+  Scenario: Test the interview "Preview"
+    Given I start the interview "docassemble.demo:data/questions/examples/preview.yml"
+    Then I should see the phrase "The food section"
+    And I wait 2 seconds
+    And I set "Favorite fruit" to "apple"
+    And I unfocus
+    And I wait 2 seconds
+    Then I should see the phrase "I am a really big fan of apple."
+    And I set "Favorite vegetable" to "turnip"
+    And I unfocus
+    And I wait 2 seconds
+    And I should see the phrase "With dinner I like to have a side of turnip."
+    And I click the option "No" under "Like mushrooms"
+    And I wait 2 seconds
+    And I set "Favorite mushroom" to "button mushrooms"
+    And I unfocus
+    And I wait 2 seconds
+    And I select "Pie" as the "Favorite dessert"
+    And I wait 2 seconds
+    Then I should see the phrase "My favorite part of the meal is dessert"
+    And I should see the phrase "when I can have a nice big slice of pie"
+    And I click the button "Continue"
+    Then I should see the phrase "Here is your document."
+    And I should see the phrase "The following document has been created for you."
+
   Scenario: Test the interview "Action with arguments"
     Given I start the interview "docassemble.base:data/questions/examples/actions-parameters.yml"
     And I click the link "Add blue fish"
@@ -34,7 +59,7 @@ Feature: Example interviews
     Then I should see the phrase "What is your date of birth?"
     And I set the text box to "03/31/1977"
     And I click the button "Continue"
-    Then I should see the phrase "You are 44 years old"
+    Then I should see the phrase "You are 45 years old"
 
   Scenario: Test the interview "Scheduled task"
     Given I start the interview "docassemble.base:data/questions/examples/alarm-clock.yml"
@@ -2183,6 +2208,34 @@ Feature: Example interviews
     And I should see the phrase "Fred likes toads and is"
     And I should see the phrase "Sälly likes frogs and is"
 
+  Scenario: Test the interview "Gathering a list of people" 3
+    Given I start the interview "docassemble.base:data/questions/examples/gather-list-friend-good-order-2.yml"
+    Then I should see the phrase "What is the name of your first friend?"
+    And I set "First Name" to "Fred"
+    And I click the button "Continue"
+    Then I should see the phrase "What is Fred’s birthdate?"
+    And I set "Birthdate" to "03/01/2000"
+    And I click the button "Continue"
+    Then I should see the phrase "What is Fred’s favorite animal?"
+    And I set "Favorite animal" to "toad"
+    And I click the button "Continue"
+    Then I should see the phrase "Do you have any other friends?"
+    And I click the button "Yes"
+    Then I should see the phrase "What is the name of your second friend?"
+    And I set "First Name" to "Sälly"
+    And I click the button "Continue"
+    Then I should see the phrase "What is Sälly’s birthdate?"
+    And I set "Birthdate" to "06/04/2003"
+    And I click the button "Continue"
+    Then I should see the phrase "What is Sälly’s favorite animal?"
+    And I set "Favorite animal" to "frog"
+    And I click the button "Continue"
+    Then I should see the phrase "Do you have any other friends?"
+    And I click the button "No"
+    Then I should see the phrase "Your friends"
+    And I should see the phrase "Fred likes toads and is"
+    And I should see the phrase "Sälly likes frogs and is"
+
   Scenario: Test the interview "Gathering a list of objects"
     Given I start the interview "docassemble.base:data/questions/examples/gather-list-objects.yml"
     Then I should see the phrase "What is the address of the first location?"
@@ -3853,7 +3906,7 @@ Feature: Example interviews
     And I select "Review Answers" from the menu
     Then I should see the phrase "Revisit your answers"
     And I should see the phrase "You said your favorite fruit was orange."
-    And I click the link "Revisit fruit"
+    And I click the link " Revisit fruit"
     Then I should see the phrase "What is your favorite fruit?"
     And I set the text box to "apple"
     And I click the button "Continue"
@@ -3872,7 +3925,7 @@ Feature: Example interviews
     And I should see the phrase "You said your favorite fruit was apple."
     Then I should see the phrase "You said your favorite vegetable was potato."
     Then I should see the phrase "You said your favorite fungus was cremini mushrooms."
-    And I click the link "Revisit fungus"
+    And I click the link " Revisit fungus"
     Then I should see the phrase "What is your favorite fungi?"
     And I set the text box to "button mushrooms"
     And I click the button "Continue"
@@ -3930,7 +3983,7 @@ Feature: Example interviews
     And I should see the phrase "Welcome to the review of answers."
     And I should see the phrase "Your favorite foods"
     And I should see the phrase "You said you liked apples."
-    And I click the link "Revisit Fruit"
+    And I click the link " Revisit Fruit"
     Then I should see the phrase "What is your favorite fruit?"
     And I set the text box to "oranges"
     And I click the button "Continue"
@@ -4199,7 +4252,7 @@ Feature: Example interviews
   Scenario: Test the interview "Subdivision type"
     Given I start the interview "docassemble.base:data/questions/examples/subdivision-type.yml"
     Then I should see the phrase "Geography lesson"
-    And I should see the phrase "In Bulgaria, you live in a Region."
+    And I should see the phrase "In Bulgaria, you live in a District."
     And I should see the phrase "In Sweden, you live in a County."
     And I should see the phrase "In Tunisia, you live in a Governorate."
     And I should see the phrase "In Viet Nam, you live in a Province."
@@ -4397,9 +4450,6 @@ Feature: Example interviews
     And I click the button "Continue"
     Then I should see the phrase "Your favorite food is soup."
 
-  # Scenario: Test the interview "Computed template filename"
-  #   Given I start the interview "docassemble.base:data/questions/examples/template-code.yml"
-
   Scenario: Test the interview "Template from file"
     Given I start the interview "docassemble.base:data/questions/examples/template-file.yml"
     Then I should see the phrase "Welcome to the interview!"
@@ -4521,13 +4571,13 @@ Feature: Example interviews
   Scenario: Test the interview "Help on label"
     Given I start the interview "docassemble.base:data/questions/examples/text-help.yml"
     Then I should see the phrase "What are your favorite things to eat?"
-    And I should see the phrase "If you don’t know what a vegetable or fruit is, click the green text."
-    And I click the link "Vegetable"
+    And I should see the phrase "If you don’t know what a vegetable or fruit is, click the question mark icons."
+    And I click the help icon for "Vegetable"
     And I wait 1 second
     Then I should see the phrase "A plant."
     And I unfocus
     And I wait 1 second
-    And I click the link "Fruit"
+    And I click the help icon for "Fruit"
     And I wait 1 second
     Then I should see the phrase "The pulpy, edible seed vessels of certain plants."
     And I unfocus
@@ -5269,7 +5319,7 @@ Feature: Example interviews
     Then I should see the phrase "The interview is complete."
 
   # Scenario: Test the interview "Save training set to playground"
-  #   Given I start the interview "docassemble.base:data/questions/examples/ml-export-playground.yml"
+  #   Given I start the interview "docassemble.demo:data/questions/examples/ml-export-playground.yml"
 
   Scenario: Test the interview "Nested groups"
     Given I start the interview "docassemble.base:data/questions/examples/nested-objects.yml"
@@ -5745,7 +5795,7 @@ Feature: Example interviews
     Then I should see the phrase "What is your date of birth?"
     And I set the text box to "08/01/1989"
     And I click the button "Continue"
-    Then I should see the phrase "You are 32 years old."
+    Then I should see the phrase "You are 33 years old."
 
   # Scenario: Test the interview "Test e-mail attachment"
   #   Given I start the interview "docassemble.demo:data/questions/testattach.yml"
@@ -5990,15 +6040,18 @@ Feature: Example interviews
     Then I should see the phrase "What is your favorite fruit?"
     And I should see the phrase "More info"
     And I click the button "Huh?"
+    And I wait 1 second
     Then I should see the phrase "A fruit is a fleshy edible part of a plant that has seeds."
-    And I go back to the question screen
+    And I click the button "Huh?"
+    And I wait 1 second
+    Then I should not see the phrase "A fruit is a fleshy edible part of a plant that has seeds."
     And I set "Fruit" to "apple"
     And I click the button "Continue"
     Then I should see the phrase "What is your favorite color?"
     And I should see the phrase "More info"
     And I click the button "Help"
+    And I wait 1 second
     Then I should see the phrase "Every photon has a frequency, which determines its color."
-    And I go back to the question screen
     And I set "Color" to "red"
     And I click the button "Continue"
     Then I should see the phrase "What is your favorite vegetable?"
@@ -6071,7 +6124,7 @@ Feature: Example interviews
     And I set "Fungi" to "button mushroom"
     And I click the button "Continue"
     Then I should see the phrase "Revisit your answers"
-    And I click the button "Revisit vegetable"
+    And I click the button " Revisit vegetable"
     And I set "Vegetable" to "potato"
     And I click the button "Continue"
     Then I should see the phrase "You said your favorite vegetable was potato."
@@ -6081,8 +6134,12 @@ Feature: Example interviews
 
   Scenario: Test the interview "Require user to log in"
     Given I start the interview "docassemble.base:data/questions/examples/user-logged-in.yml"
-    And I wait 1 second
-    Then I should see the phrase "Sign in"
+    Then I should see the phrase "What is your favorite fruit?"
+    And I set "Fruit" to "apple"
+    And I click the button "Continue"
+    Then I should see the phrase "You need to log in to finish this interview."
+    And I click the button "Log in"
+    Then I should see the phrase "Password"
 
   Scenario: Test the interview ".docx include with parameters"
     Given I start the interview "docassemble.demo:data/questions/examples/subdoc-params.yml"
@@ -6372,7 +6429,7 @@ Feature: Example interviews
     And I should see the phrase "Your favorite fruit is orange."
     And I should see the phrase "Your favorite vegetable is turnip."
     And I should see the phrase "Your favorite fungus is button mushrooms."
-    And I click the link "Edit"
+    And I click the link " Edit"
     Then I should see the phrase "What is your favorite fruit?"
     And I click the button "Continue"
     Then I should see the phrase "What is your favorite vegetable?"
@@ -6424,7 +6481,7 @@ Feature: Example interviews
     And I select "Review Answers" from the menu
     Then I should see the phrase "Revisit your answers"
     Then I should see the phrase "We expect you would enjoy a orange-turnip salad."
-    And I click the link "Edit"
+    And I click the link " Edit"
     Then I should see the phrase "What is your favorite fruit?"
     And I set the text box to "apple"
     And I click the button "Continue"
@@ -6463,7 +6520,7 @@ Feature: Example interviews
     And I should see the phrase "The people are Jöhn Smith and Jane Doe and your favorite is Jane Doe."
     And I click the link "edit your answers"
     Then I should see the phrase "Edit your answers"
-    And I click the second link "Edit"
+    And I click the second link " Edit"
     Then I should see the phrase "Edit the people"
     And I click the button "Continue"
     Then I should see the phrase "Edit your answers"
@@ -6485,7 +6542,7 @@ Feature: Example interviews
     And I click the link "change this"
     Then I should see the phrase "Revisit the equation"
     And I should see the phrase "10.0 + 5.0 - 2.0 = 13.0"
-    And I click the link "Change this"
+    And I click the link " Change this"
     Then I should see the phrase "What is a?"
     And I set "a" to "15"
     And I click the button "Continue"
@@ -6562,12 +6619,12 @@ Feature: Example interviews
     Then I should see the phrase "Are there any other employees of ABC?"
     And I click the button "No"
     Then I should see the phrase "Edit company info"
-    And I click the second link "Edit"
+    And I click the second link " Edit"
     Then I should see the phrase "Who is the CEO of ABC?"
     And I set "First Name" to "Abraham"
     And I click the button "Continue"
     Then I should not see the phrase "Abe Brown"
-    And I click the first link "Edit"
+    And I click the first link " Edit"
     Then I should see the phrase "What is the company’s name?"
     And I set "Name" to "Abbott Bouvier Centurion"
     And I click the button "Continue"
@@ -6599,12 +6656,12 @@ Feature: Example interviews
     Then I should see the phrase "Are there any other employees of ABC?"
     And I click the button "No"
     Then I should see the phrase "Edit company info"
-    And I click the second link "Edit"
+    And I click the second link " Edit"
     Then I should see the phrase "Who is the CEO of ABC?"
     And I set "First Name" to "Abraham"
     And I click the button "Continue"
     Then I should see the phrase "Abe Brown"
-    And I click the fourth link "Edit"
+    And I click the fourth link " Edit"
     And I click the second link " Delete"
     Then I should not see the phrase "Thomas Miller"
     And I click the button "Continue"
@@ -6992,12 +7049,12 @@ Feature: Example interviews
     Then I should see the phrase "Your favorite apple is Granny Smith."
     And I click the button "Continue"
     Then I should see the phrase "Please review the results."
-    And I click the link "Edit"
+    And I click the link " Edit"
     Then I should see the phrase "What is your favorite fruit?"
     And I click the "Orange" option
     And I click the button "Continue"
     Then I should see the phrase "Your favorite fruit is Orange."
-    And I click the link "Edit"
+    And I click the link " Edit"
     Then I should see the phrase "What is your favorite fruit?"
     And I click the "Apple" option
     And I click the button "Continue"
@@ -7345,7 +7402,13 @@ Feature: Example interviews
     And I should see the phrase "This is the under part."
     And I should see the phrase "This is the post part."
     And I should see the phrase "This is the submit part."
+    And I should see the phrase "This is the footer part."
     And I click the button "Help label"
+    And I wait 1 second
+    Then I should see the phrase "This is some question-specific help text for the fruit question."
+    And I go to the help screen
+    Then I should see the phrase "This is the interview help"
+    And I should see the phrase "This is the post part."
     And I go back to the question screen
     And I set "Favorite fruit" to "apple"
     And I click the button "Continue button label"
@@ -7718,14 +7781,6 @@ Feature: Example interviews
     And I should see the phrase "The following document has been created for you."
     And I should see the phrase "Story of My Life"
 
-  # Scenario: Test the interview "Two-stage assembly"
-  #   Given I start the interview "docassemble.demo:data/questions/examples/twostage.yml"
-  #   Then I should see the phrase "What is your favorite fruit?"
-  #   And I set "Favorite fruit" to "apple"
-  #   And I click the button "Continue"
-  #   Then I should see the phrase "All done"
-  #   And I should see the phrase "The following document has been created for you."
-
   Scenario: Test the interview "Hello World" 2
     Given I start the interview "docassemble.demo:data/questions/hello7.yml"
     Then I should see the phrase "What is your planet’s name?"
@@ -8052,7 +8107,7 @@ Feature: Example interviews
     And I should see the phrase "A is 5.0."
     And I should see the phrase "B is 25.0."
     And I should see the phrase "C is 30.0."
-    And I click the link "Edit A"
+    And I click the link " Edit A"
     Then I should see the phrase "What is A?"
     And I set "A" to "4"
     And I click the button "Continue"
@@ -8112,7 +8167,7 @@ Feature: Example interviews
     And I should see the phrase "A is 5.0."
     And I should see the phrase "B is 25.0."
     And I should see the phrase "C is 30.0."
-    And I click the link "Edit A"
+    And I click the link " Edit A"
     Then I should see the phrase "What is A?"
     And I set "A" to "4"
     And I click the button "Continue"
@@ -8801,7 +8856,7 @@ Feature: Example interviews
     Then I should see the phrase "Upload a PDF file or image."
     And I upload the file "/home/jpyle/da/tests/testfile2.png"
     And I click the button "Continue"
-    And I wait 20 seconds
+    And I wait 25 seconds
     Then I should see the phrase "Your OCR PDF"
 
   Scenario: Test the interview "OCR PDF"
@@ -8809,7 +8864,7 @@ Feature: Example interviews
     Then I should see the phrase "Upload a PDF file or image."
     And I upload the file "/home/jpyle/da/tests/testfile2.png"
     And I click the button "Continue"
-    And I wait 10 seconds
+    And I wait 20 seconds
     Then I should see the phrase "Your OCR PDF"
 
   # Scenario: Test the interview "Multiple signatures"
@@ -8860,7 +8915,8 @@ Feature: Example interviews
     Given I start the interview "docassemble.demo:data/questions/examples/phone-number-2.yml"
     Then I should see the phrase "What is your phone number?"
     And I set "Enter your phone number" to "215-555-2342"
-    Then I should see the phrase "I will text you at +12155552342."
+    And I click the button "Continue"
+    Then I should see the phrase "I will text you at +12155552342"
 
   Scenario: Test the interview "Phone number"
     Given I start the interview "docassemble.demo:data/questions/examples/phone-number.yml"
@@ -8879,25 +8935,6 @@ Feature: Example interviews
     Then I should see the phrase "How tasty is it?"
     And I click the button "Continue"
     Then I should see the phrase "Exception: Reference to undefined variable in context where dependency satisfaction not allowed"
-
-  Scenario: Test the interview "Preview"
-    Given I start the interview "docassemble.demo:data/questions/examples/preview.yml"
-    Then I should see the phrase "The food section"
-    And I set "Favorite fruit" to "apple"
-    And I set "Favorite vegetable" to "turnip"
-    And I unfocus
-    And I wait 1 second
-    Then I should see the phrase "I am a really big fan of apple. With dinner I like to have a side of turnip."
-    And I click the option "No" under "Like mushrooms"
-    And I set "Favorite mushroom" to "button mushrooms"
-    And I select "Pie" as the "Favorite dessert"
-    And I unfocus
-    And I wait 2 second
-    Then I should see the phrase "My favorite part of the meal is dessert"
-    And I should see the phrase "when I can have a nice big slice"
-    And I click the button "Continue"
-    Then I should see the phrase "Here is your document."
-    And I should see the phrase "The following document has been created for you."
 
   Scenario: Test the interview "DOM"
     Given I start the interview "docassemble.demo:data/questions/examples/pytojs-dom.yml"
@@ -8940,18 +8977,18 @@ Feature: Example interviews
     Then I should see the phrase "Think of a fruit."
     And I click the button "Continue"
     Then I should see the phrase "Is it round?"
-    And I click the button "No"
+    And I click the button "Yes"
     Then I should see the phrase "What color is it when ripe?"
-    And I click the option "Yellow"
+    And I click the option "Red"
     And I click the button "Continue"
     Then I should see the phrase "Where are its seeds?"
-    And I click the option "Throughout"
+    And I click the option "Inside"
     And I click the button "Continue"
     Then I should see the phrase "How many inches wide is a typical specimen?"
     And I click the button "Continue"
     Then I should see the phrase "How sweet is it, on a scale from 1 to 5?"
     And I click the button "Continue"
-    Then I should see the phrase "I think it is a banana. Am I right?"
+    Then I should see the phrase "I think it is an apple. Am I right?"
     And I click the button "Yes"
     Then I should see the phrase "Thank you!"
 
@@ -9047,18 +9084,46 @@ Feature: Example interviews
   # Scenario: Test the interview "Stage two"
   #   Given I start the interview "docassemble.demo:data/questions/examples/stage-two.yml"
 
-  Scenario: Test the interview "SSN"
-    Given I start the interview "docassemble.demo:data/questions/examples/testssn.yml"
-    Then I should see the phrase "What is your SSN?"
-    And I set "SSN" to "04"
-    And I unfocus
-    Then I should see the phrase "You need to enter a valid SSN"
-    And I set "SSN" to "042232323"
-    And I click the button "Continue"
-    Then I should see the phrase "Your SSN is 042-23-2323."
+  # Scenario: Test the interview "SSN"
+  #   Given I start the interview "docassemble.demo:data/questions/examples/testssn.yml"
+  #   Then I should see the phrase "What is your SSN?"
+  #   And I set "SSN" to "04"
+  #   And I unfocus
+  #   Then I should see the phrase "You need to enter a valid SSN"
+  #   And I set "SSN" to "042232323"
+  #   And I click the button "Continue"
+  #   Then I should see the phrase "Your SSN is 042-23-2323."
 
   # Scenario: Test the interview "Universal assembler"
   #   Given I start the interview "docassemble.demo:data/questions/examples/universal-document.yml"
 
   # Scenario: Test the interview ""
   #   Given I start the interview "docassemble.demo:data/questions/sign.yml"
+
+  Scenario: Test the interview "Breadcrumbs"
+    Given I start the interview "docassemble.base:data/questions/examples/breadcrumbs.yml"
+    Then I should see the phrase "Who is the first person?"
+    And I set "First Name" to "John"
+    And I set "Last Name" to "Smith"
+    And I click the button "Continue"
+    Then I should see the phrase "What is John Smith’s favorite fruit?"
+    And I set "Fruit" to "apples"
+    And I click the button "Continue"
+    Then I should see the phrase "Are there any more people you would like to mention?"
+    And I click the button "Yes"
+    Then I should see the phrase "Who is the second person?"
+    And I set "First Name" to "Jane"
+    And I set "Last Name" to "Doe"
+    And I click the button "Continue"
+    Then I should see the phrase "What is Jane Doe’s favorite fruit?"
+    And I set "Fruit" to "peaches"
+    And I click the button "Continue"
+    Then I should see the phrase "Are there any more people you would like to mention?"
+    And I click the button "No"
+    Then I should see the phrase "Thank you for your answers!"
+    And I click the link "edit your answers"
+    Then I should see the phrase "Edit your answers"
+    And I click the first link " Edit"
+    And I click the button "Continue"
+    And I click the link "types of fruit"
+    Then I should see the phrase "Fruit types"

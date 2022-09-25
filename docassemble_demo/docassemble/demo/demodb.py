@@ -4,10 +4,9 @@ from docassemble.base.util import Individual, Person, DAObject
 # Import the SQLObject and some associated utility functions
 from docassemble.base.sql import alchemy_url, connect_args, upgrade_db, SQLObject, SQLObjectRelationship
 # Import SQLAlchemy names
-from sqlalchemy import Column, ForeignKey, Integer, String, create_engine, or_, and_
+from sqlalchemy import Column, ForeignKey, Integer, String, create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, sessionmaker
-import sys
+from sqlalchemy.orm import sessionmaker
 
 # Only allow these names (DAObject classes) to be imported with a modules block
 __all__ = ['Bank', 'Customer', 'BankCustomer']
@@ -15,14 +14,18 @@ __all__ = ['Bank', 'Customer', 'BankCustomer']
 # Create the base class for SQLAlchemy table definitions
 Base = declarative_base()
 
+
 # SQLAlchemy table definition for a Bank
+
 class BankModel(Base):
     __tablename__ = 'bank'
     id = Column(Integer, primary_key=True)
     routing = Column(String(250), unique=True)
     name = Column(String(250))
 
+
 # SQLAlchemy table definition for a Customer
+
 class CustomerModel(Base):
     __tablename__ = 'customer'
     id = Column(Integer, primary_key=True)
@@ -35,7 +38,9 @@ class CustomerModel(Base):
     state = Column(String(250))
     zip = Column(String(250))
 
+
 # SQLAlchemy table definition for keeping track of which Banks have which Customers
+
 class BankCustomerModel(Base):
     __tablename__ = 'bank_customer'
     id = Column(Integer, primary_key=True)
@@ -52,7 +57,7 @@ if url.startswith('postgres'):
 else:
     engine = create_engine(url, pool_pre_ping=False)
 
-# Create the tables 
+# Create the tables
 Base.metadata.create_all(engine)
 
 # Get SQLAlchemy ready
@@ -63,7 +68,9 @@ DBSession = sessionmaker(bind=engine)()
 # directory and alembic.ini file in the package.
 upgrade_db(url, __file__, engine, conn_args=conn_args)
 
+
 # Define Bank as both a DAObject and SQLObject
+
 class Bank(Person, SQLObject):
     # This tells the SQLObject code what the SQLAlchemy model is
     _model = BankModel
@@ -73,28 +80,38 @@ class Bank(Person, SQLObject):
     _required = ['name']
     # This indicates that the human-readable unique identifier for the table is the column "routing"
     _uid = 'routing'
+
     def init(self, *pargs, **kwargs):
         super().init(*pargs, **kwargs)
         # This runs necessary SQLObject initialization code for the instance
         self.sql_init()
+
     # The db_get function specifies how to get attributes from the DAObject for purposes of setting SQL column values
     def db_get(self, column):
         if column == 'name':
             return self.name.text
-        elif column == 'routing':
+        if column == 'routing':
             return self.routing
+        raise Exception("Invalid column " + column)
+
     # The db_set function specifies how to set attributes of the DAObject on the basis of non-null SQL column values
     def db_set(self, column, value):
         if column == 'name':
             self.name.text = value
         elif column == 'routing':
             self.routing = value
+        else:
+            raise Exception("Invalid column " + column)
+
     # The db_null function specifies how to delete attributes of the DAObject when the SQL column value becomes null
     def db_null(self, column):
         if column == 'name':
             del self.name.text
         elif column == 'routing':
             del self.routing
+        else:
+            raise Exception("Invalid column " + column)
+
     # This is an example of a method that uses SQLAlchemy to return True or False
     def has_customer(self, customer):
         if not (self.ready() and customer.ready()):
@@ -104,6 +121,7 @@ class Bank(Person, SQLObject):
         if db_entry is None:
             return False
         return True
+
     # This is an example of a method that uses SQLAlchemy to add a record to the BankCustomer SQL table
     # to indicate that a bank has a customer.  Note that it is designed to be idempotent; it will not add
     # a duplicate record.
@@ -112,15 +130,17 @@ class Bank(Person, SQLObject):
             db_entry = BankCustomerModel(bank_id=self.id, customer_id=customer.id)
             self._session.add(db_entry)
             self._session.commit()
+
     # This is an example of a method that uses SQLAlchemy to return a list of Customer objects.
     # It uses the by_id() class method to return a Customer object for the given id.
     def get_customers(self):
         if not self.ready():
             raise Exception("get_customers: cannot retrieve data")
-        results = list()
+        results = []
         for db_entry in self._session.query(BankCustomerModel).filter(BankCustomerModel.bank_id == self.id).all():
             results.append(Customer.by_id(db_entry.customer_id))
-        return results                
+        return results
+
     # This is an example of a method that uses SQLAlchemy to delete a bank-customer relationship
     def del_customer(self, customer):
         if not (self.ready() and customer.ready()):
@@ -128,31 +148,36 @@ class Bank(Person, SQLObject):
         self._session.query(BankCustomerModel).filter(BankCustomerModel.bank_id == self.id, BankCustomerModel.customer_id == customer.id).delete()
         self._session.commit()
 
+
 class Customer(Individual, SQLObject):
     _model = CustomerModel
     _session = DBSession
     _required = ['first_name']
     _uid = 'ssn'
+
     def init(self, *pargs, **kwargs):
         super().init(*pargs, **kwargs)
         self.sql_init()
+
     def db_get(self, column):
         if column == 'ssn':
             return self.ssn
-        elif column == 'first_name':
+        if column == 'first_name':
             return self.name.first
-        elif column == 'last_name':
+        if column == 'last_name':
             return self.name.last
-        elif column == 'address':
+        if column == 'address':
             return self.address.address
-        elif column == 'unit':
+        if column == 'unit':
             return self.address.unit
-        elif column == 'city':
+        if column == 'city':
             return self.address.city
-        elif column == 'state':
+        if column == 'state':
             return self.address.state
-        elif column == 'zip':
+        if column == 'zip':
             return self.address.zip
+        raise Exception("Invalid column " + column)
+
     def db_set(self, column, value):
         if column == 'ssn':
             self.ssn = value
@@ -170,6 +195,7 @@ class Customer(Individual, SQLObject):
             self.address.state = value
         elif column == 'zip':
             self.address.zip = value
+
     def db_null(self, column):
         if column == 'ssn':
             del self.ssn
@@ -188,24 +214,32 @@ class Customer(Individual, SQLObject):
         elif column == 'zip':
             del self.address.zip
 
+
 class BankCustomer(DAObject, SQLObjectRelationship):
     _model = BankCustomerModel
     _session = DBSession
     _parent = [Bank, 'bank', 'bank_id']
     _child = [Customer, 'customer', 'customer_id']
+
     def init(self, *pargs, **kwargs):
         super().init(*pargs, **kwargs)
         self.rel_init(*pargs, **kwargs)
+
     def db_get(self, column):
         if column == 'bank_id':
             return self.bank.id
-        elif column == 'customer_id':
+        if column == 'customer_id':
             return self.customer.id
+        raise Exception("Invalid column " + column)
+
     def db_set(self, column, value):
         if column == 'bank_id':
             self.bank = Bank.by_id(value)
         elif column == 'customer_id':
             self.customer = Customer.by_id(value)
+        else:
+            raise Exception("Invalid column " + column)
+
     # A db_find_existing method is defined here because the default db_find_existing() method for
     # the SQLObject class tries to find existing records based on a unique identifier column indicated
     # by the _uid attribute.  Since the unique identifier for a bank-customer relationship record is

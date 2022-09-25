@@ -1,5 +1,6 @@
 debug: True
 enable playground: True
+allow log viewing: True
 allow demo: True
 exitpage: https://docassemble.org
 db:
@@ -54,7 +55,7 @@ locale: en_US.utf8
 voicerss:
   enable: False
   key: ae8734983948ebc98239e9898f998432
-  languages:
+  dialects:
     en: us
     es: mx
     fr: fr
@@ -63,6 +64,11 @@ s3:
   access key id: FWIEJFIJIDGISEJFWOEF
   secret access key: RGERG34eeeg3agwetTR0+wewWAWEFererNRERERG
   bucket: yourbucketname
+  server side encryption:
+    algorithm: null
+    customer algorithm: null
+    customer key: null
+    KMS key ID: null
 azure:
   enable: False
   account name: example-com
@@ -81,3 +87,6 @@ words:
   - docassemble.base:data/sources/us-words.yml
 allow non-idempotent questions: False
 new markdown to docx: True
+new template markdown behavior: True
+enable unoconv: True
+allow configuration editing: True

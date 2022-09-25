@@ -1,36 +1,43 @@
+import re
 from flask_wtf import FlaskForm
 from docassemble.base.functions import LazyWord as word
 from wtforms import validators, ValidationError, StringField, SubmitField, TextAreaField, SelectMultipleField, SelectField, FileField, HiddenField, RadioField, BooleanField
-import re
-import sys
+
 
 class NonValidatingSelectField(SelectField):
+
     def pre_validate(self, form):
         pass
 
-def validate_project_name(form, field):
-    if re.search('^[0-9]', field.data):
+
+def validate_project_name(form, field):  # pylint: disable=unused-argument
+    if re.search(r'^[0-9]', field.data):
         raise ValidationError(word('Project name cannot begin with a number'))
-    if re.search('[^A-Za-z0-9]', field.data):
+    if re.search(r'[^A-Za-z0-9]', field.data):
         raise ValidationError(word('Valid characters are: A-Z, a-z, 0-9'))
 
-def validate_name(form, field):
-    if re.search('[^A-Za-z0-9\-]', field.data):
+
+def validate_name(form, field):  # pylint: disable=unused-argument
+    if re.search(r'[^A-Za-z0-9\-]', field.data):
         raise ValidationError(word('Valid characters are: A-Z, a-z, 0-9, hyphen'))
 
-def validate_package_name(form, field):
-    if re.search('[^A-Za-z0-9]', field.data):
+
+def validate_package_name(form, field):  # pylint: disable=unused-argument
+    if re.search(r'[^A-Za-z0-9]', field.data):
         raise ValidationError(word('Valid characters are: A-Z, a-z, 0-9'))
+
 
 class CreatePackageForm(FlaskForm):
     name = StringField(word('Package name'), validators=[
-        validators.Required(word('Package name is required')), validate_name])
+        validators.DataRequired(word('Package name is required')), validate_name])
     submit = SubmitField(word('Get template'))
+
 
 class CreatePlaygroundPackageForm(FlaskForm):
     name = SelectField(word('Package'), validators=[
-        validators.Required(word('Package name is required')), validate_name])
+        validators.DataRequired(word('Package name is required')), validate_name])
     submit = SubmitField(word('Get package'))
+
 
 class UpdatePackageForm(FlaskForm):
     giturl = StringField(word('GitHub URL'))
@@ -39,10 +46,12 @@ class UpdatePackageForm(FlaskForm):
     pippackage = StringField(word('Package on PyPI'))
     submit = SubmitField(word('Update'))
 
+
 class ConfigForm(FlaskForm):
     config_content = TextAreaField(word('Configuration YAML'))
     submit = SubmitField(word('Save'))
     cancel = SubmitField(word('Cancel'))
+
 
 class PlaygroundForm(FlaskForm):
     status = StringField('Status')
@@ -54,8 +63,10 @@ class PlaygroundForm(FlaskForm):
     run = SubmitField(word('Save and Run'))
     delete = SubmitField(word('Delete'))
 
+
 class PlaygroundUploadForm(FlaskForm):
     uploadfile = FileField(word('File to upload'))
+
 
 class LogForm(FlaskForm):
     filter_string = StringField(word('Filter For'))
@@ -63,23 +74,27 @@ class LogForm(FlaskForm):
     submit = SubmitField(word('Apply'))
     clear = SubmitField(word('Clear'))
 
+
 class Utilities(FlaskForm):
     pdfdocxfile = FileField(word('PDF/DOCX File'))
     scan = SubmitField(word('Scan'))
     interview = StringField(word('Interview'))
     interview_submit = SubmitField(word('Download'))
     language = StringField(word('Language'))
+    tr_language = StringField(word('Language'))
     systemfiletype = SelectField(word('Output Format'))
     filetype = SelectField(word('Output Format'))
     language_submit = SubmitField(word('Translate'))
     officeaddin_version = StringField(word('Version'), default='0.0.0.1')
     officeaddin_submit = SubmitField(word('Download'))
-    
+
+
 class PlaygroundFilesForm(FlaskForm):
     purpose = StringField('Purpose')
     section = StringField(word('Section'))
     uploadfile = FileField(word('File to upload'))
     submit = SubmitField(word('Upload'))
+
 
 class PlaygroundFilesEditForm(FlaskForm):
     purpose = StringField('Purpose')
@@ -92,18 +107,22 @@ class PlaygroundFilesEditForm(FlaskForm):
     submit = SubmitField(word('Save'))
     delete = SubmitField(word('Delete'))
 
+
 class RenameProject(FlaskForm):
     name = StringField(word('New Name'), validators=[
-        validators.Required(word('Project name is required')), validate_project_name])
+        validators.DataRequired(word('Project name is required')), validate_project_name])
     submit = SubmitField(word('Rename'))
+
 
 class DeleteProject(FlaskForm):
     submit = SubmitField(word('Delete'))
 
+
 class NewProject(FlaskForm):
     name = StringField(word('Name'), validators=[
-        validators.Required(word('Project name is required')), validate_project_name])
+        validators.DataRequired(word('Project name is required')), validate_project_name])
     submit = SubmitField(word('Save'))
+
 
 class PullPlaygroundPackage(FlaskForm):
     github_url = StringField(word('GitHub URL'))
@@ -112,10 +131,12 @@ class PullPlaygroundPackage(FlaskForm):
     pull = SubmitField(word('Pull'))
     cancel = SubmitField(word('Cancel'))
 
+
 class PlaygroundPackagesForm(FlaskForm):
     original_file_name = StringField(word('Original Name'))
     file_name = StringField(word('Package Name'), validators=[validators.Length(min=1, max=50),
-        validators.Required(word('Package Name is required')), validate_package_name])
+                                                              validators.DataRequired(word('Package Name is required')),
+                                                              validate_package_name])
     license = StringField(word('License'), default='The MIT License (MIT)', validators=[validators.Length(min=0, max=255)])
     author_name = StringField(word('Author Name'), validators=[validators.Length(min=0, max=255)])
     author_email = StringField(word('Author E-mail'), validators=[validators.Length(min=0, max=255)])
@@ -142,15 +163,18 @@ class PlaygroundPackagesForm(FlaskForm):
     cancel = SubmitField(word('Cancel'))
     delete = SubmitField(word('Delete'))
 
+
 class GoogleDriveForm(FlaskForm):
     folder = SelectField(word('Folder'))
     submit = SubmitField(word('Save'))
     cancel = SubmitField(word('Cancel'))
 
+
 class OneDriveForm(FlaskForm):
     folder = SelectField(word('Folder'))
     submit = SubmitField(word('Save'))
     cancel = SubmitField(word('Cancel'))
+
 
 class GitHubForm(FlaskForm):
     shared = BooleanField(word('Access shared repositories'))
@@ -160,6 +184,7 @@ class GitHubForm(FlaskForm):
     unconfigure = SubmitField(word('Disable'))
     cancel = SubmitField(word('Back to profile'))
 
+
 class TrainingForm(FlaskForm):
     the_package = HiddenField()
     the_file = HiddenField()
@@ -168,18 +193,22 @@ class TrainingForm(FlaskForm):
     submit = SubmitField(word('Save'))
     cancel = SubmitField(word('Cancel'))
 
+
 class TrainingUploadForm(FlaskForm):
     usepackage = RadioField(word('Use Package'))
     jsonfile = FileField(word('JSON file'))
     importtype = RadioField(word('Import method'))
     submit = SubmitField(word('Import'))
 
+
 class AddinUploadForm(FlaskForm):
     content = HiddenField()
     filename = HiddenField()
 
+
 class FunctionFileForm(FlaskForm):
     pass
+
 
 class APIKey(FlaskForm):
     action = HiddenField()
@@ -187,10 +216,12 @@ class APIKey(FlaskForm):
     security = HiddenField()
     name = StringField(word('Name'), validators=[validators.Length(min=1, max=255)])
     method = SelectField(word('Security Method'))
+    permissions = SelectMultipleField(word('Limited Permissions'))
     submit = SubmitField(word('Create'))
     delete = SubmitField(word('Delete'))
-    def validate(self):
-        rv = FlaskForm.validate(self)
+
+    def validate(self, extra_validators=None):
+        rv = FlaskForm.validate(self, extra_validators=extra_validators)
         if not rv:
             return False
         if self.action.data not in ('edit', 'new'):

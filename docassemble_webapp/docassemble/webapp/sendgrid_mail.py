@@ -1,22 +1,26 @@
 # Adapted from flask_mail
+import base64
+# import sys
 import time
-import requests
-from requests.auth import HTTPBasicAuth
+from docassemble.base.functions import word
+from docassemble.base.logger import logmessage
 from flask_mail import Message, BadHeaderError, sanitize_addresses, email_dispatched, contextmanager, current_app
 from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail as SGMail, Attachment, FileContent, FileName, FileType, Disposition, ContentId, Email, To, ReplyTo
-from docassemble.base.functions import word
-import sys
-import base64
+from sendgrid.helpers.mail import Mail as SGMail, Attachment, FileContent, FileName, FileType, Disposition, Email, To, ReplyTo
 
-class Connection(object):
+
+class Connection:
+
     def __init__(self, mail):
         self.mail = mail
+
     def __enter__(self):
         return self
+
     def __exit__(self, exc_type, exc_value, tb):
         pass
-    def send(self, message, envelope_from=None):
+
+    def send(self, message, envelope_from=None):  # pylint: disable=unused-argument
         assert message.send_to, "No recipients have been added"
         assert message.sender, (
                 "The message does not specify a sender and a default sender "
@@ -52,18 +56,20 @@ class Connection(object):
         sg = SendGridAPIClient(self.mail.api_key)
         response = sg.send(sgmessage)
         if response.status_code >= 400:
-            sys.stderr.write("SendGrid status code: " + str(response.status_code) + "\n")
-            sys.stderr.write("SendGrid response headers: " + repr(response.headers) + "\n")
+            logmessage("SendGrid status code: " + str(response.status_code))
+            logmessage("SendGrid response headers: " + repr(response.headers))
             try:
-                sys.stderr.write(repr(response.body) + "\n")
+                logmessage(repr(response.body))
             except:
                 pass
             raise Exception("Failed to send e-mail message to SendGrid")
         email_dispatched.send(message, app=current_app._get_current_object())
+
     def send_message(self, *args, **kwargs):
         self.send(Message(*args, **kwargs))
 
-class _MailMixin(object):
+
+class _MailMixin:
 
     @contextmanager
     def record_messages(self):
@@ -72,7 +78,7 @@ class _MailMixin(object):
 
         outbox = []
 
-        def _record(message, app):
+        def _record(message, app):  # pylint: disable=unused-argument
             outbox.append(message)
 
         email_dispatched.connect(_record)
@@ -95,8 +101,10 @@ class _MailMixin(object):
             return Connection(app.extensions['mail'])
         except KeyError:
             raise RuntimeError("The curent application was not configured with Flask-Mail")
-        
+
+
 class _Mail(_MailMixin):
+
     def __init__(self, api_key,
                  default_sender, debug, suppress,
                  ascii_attachments=False):
@@ -106,7 +114,9 @@ class _Mail(_MailMixin):
         self.suppress = suppress
         self.ascii_attachments = ascii_attachments
 
+
 class Mail(_MailMixin):
+
     def __init__(self, app=None):
         self.app = app
         if app is not None:

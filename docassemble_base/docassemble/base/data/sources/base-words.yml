@@ -11,6 +11,7 @@
 "Active File": Null
 "Active": Null
 "Actual": Null
+"Add a New API Key": Null
 "Add a new privilege": Null
 "Add a New Project": Null
 "Add an item": Null
@@ -29,6 +30,7 @@
 "Albania": Null
 "Algeria": Null
 "Allowed sites": Null
+"All Playgrounds": Null
 "Already registered?": Null
 "Already registered? Sign in.": Null
 "American Samoa": Null
@@ -84,6 +86,7 @@
 "Back to Playground": Null
 "Back to profile": Null
 "Back to question": Null
+"Back to user list": Null
 "Bad date": Null
 "Bad file format": Null
 "Bahamas": Null
@@ -105,7 +108,9 @@
 "Bouvet Island": Null
 "Branch": Null
 "Brazil": Null
+"breadcrumb": Null
 "British Indian Ocean Territory": Null
+"Browse Other Playgrounds": Null
 "Brunei Darussalam": Null
 "Bulgaria": Null
 "Burkina Faso": Null
@@ -126,13 +131,12 @@
 "Change username": Null
 "Chat message you want to send": Null
 "Check at least one option, or check “%s”": Null
-"Checkboxes:": Null
 "Check box": Null
 "Check if applicable": Null
 "Chile": Null
 "China": Null
+"Choices (choose one):": Null
 "Choices:": Null
-"Choose file": Null
 "Christmas Island": Null
 "Classes": Null
 "Clear": Null
@@ -255,6 +259,7 @@
 "e.g., *example.com": Null
 "Egypt": Null
 "El Salvador": Null
+"E-mail addresses with this domain are not authorized to register for accounts on this system.": Null
 "E-mail address is required": Null
 "Email address is required": Null
 "E-mail address": Null
@@ -272,6 +277,7 @@
 "Enter code": Null
 "Entering a different interview.  To go back to your previous interview, go to My Interviews on the menu.": Null
 "Entering a different interview.  To go back to your previous interview, log in to see a list of your interviews.": Null
+"Enter": Null
 "Enter the name of the new project you want to create.": Null
 "Equatorial Guinea": Null
 "Erase existing data for each model before importing": Null
@@ -407,6 +413,7 @@
 "icon": Null
 "I do not understand what you mean by": Null
 "I don't know": Null
+"If no items are selected, user privileges will determine permissions of the API key.": Null
 "If you did not initiate this confirmation, you may safely ignore this email.": Null
 "If you did not initiate this password change, click the link below to reset it.": Null
 "If you did not initiate this password change,": Null
@@ -424,9 +431,13 @@
 "Import method": Null
 "Import": Null
 "Import training data from a JSON file": Null
+"Include DOCX and Markdown files for editing": Null
 "Include DOCX file for editing": Null
 "Include DOCX files for editing": Null
+"Include Markdown file for editing": Null
+"Include Markdown files for editing": Null
 "Include RTF and DOCX files for editing": Null
+"Include RTF and Markdown files for editing": Null
 "Include RTF file for editing": Null
 "Include RTF files for editing": Null
 "Incorrect Email and/or Password": Null
@@ -434,6 +445,7 @@
 "Incorrect %(username_or_email)s and/or Password": Null
 "India": Null
 "Indonesia": Null
+"Information for the developer": Null
 "in mako": Null
 "Input box": Null
 "Input not processed because the page expired.": Null
@@ -450,6 +462,7 @@
 "Interview files": Null
 "Interview": Null
 "Interview:": Null
+"Interview Progress": Null
 "Interviews": Null
 "in the": Null
 "Invalid action.": Null
@@ -509,6 +522,7 @@
 "Libya": Null
 "License": Null
 "Liechtenstein": Null
+"Limited Permissions": Null
 "Linked folder": Null
 "link": Null
 "Links": Null
@@ -688,6 +702,7 @@
 "Paraguay": Null
 "Password and Retype Password did not match": Null
 "Password is required": Null
+"Password must be at least six characters long with at least one lowercase letter, at least one uppercase letter, and at least one number.": Null
 "Password must have at least 6 characters with one lowercase letter, one uppercase letter and one number": Null
 "password": Null
 "Password": Null
@@ -700,6 +715,7 @@
 "Phone help is available": Null
 "Phone help": Null
 "Phone number": Null
+"Pick actual value": Null
 "pip log": Null
 "Pitcairn": Null
 "Plain text of sections": Null
@@ -772,7 +788,8 @@
 "question": Null
 "Question": Null
 "quit": Null
-"Readability": Null
+"Readability of help text": Null
+"Readability of question": Null
 "README file": Null
 "Read this screen out loud": Null
 "Reason for needing developer account (optional)": Null
@@ -889,6 +906,7 @@
 "Sign in with Twitter": Null
 "Sign in with your mobile phone": Null
 "Sign Out": Null
+"Sign up": Null
 "Sign Your Name": Null
 "Since you changed a Python module, the server needs to restart in order to load your module.": Null
 "Since you did not type \"delete my account\" I did not delete your account.": Null
@@ -900,7 +918,6 @@
 "Slovakia": Null
 "Slovenia": Null
 "SMS": Null
-"Social ID": Null
 "Solomon Islands": Null
 "Somalia": Null
 "something": Null
@@ -908,7 +925,6 @@
 "Sorry, only .py files can be uploaded here.  To upload other types of files, use other Folders.": Null
 "Sorry, only YAML files can be uploaded here.  To upload other types of files, use the Folders.": Null
 "Sorry, that package name does not exist in the playground": Null
-"Sorry, that package name is already in use by someone else": Null
 "Sorry, that package name,": Null
 "Source code for question": Null
 "Source files": Null
@@ -929,6 +945,7 @@
 "Static Files": Null
 "Stop Controlling": Null
 "Stop Observing": Null
+"<strong>This is the only time you will be able to see your API key</strong>, so make sure to make a note of it and keep it in a secure place.": Null
 "Submit": Null
 "Sudan": Null
 "(%s uncompressed)": Null
@@ -953,6 +970,7 @@
 "Telephone assistance": Null
 "Template files": Null
 "Templates": Null
+"(term definition)": Null
 "Terms used in this question:": Null
 "Terms used:": Null
 "Test": Null
@@ -1063,6 +1081,7 @@
 "Tuvalu": Null
 "Twice Per Month": Null
 "Two-factor authentication": Null
+"Type actual value": Null
 "Type a currency value.": Null
 "Type a currency value, or type skip.": Null
 "Type a date and time.": Null
@@ -1213,9 +1232,11 @@
 "You can type menu1 to select the menu item": Null
 "You can type question to read the question again.": Null
 "You can upload a file here": Null
+"You can use the Playground of another user who has admin or developer privileges.": Null
 "You do not have any API keys yet.": Null
 "You do not have permission to access '%(url)s'.": Null
 "You do not have permission to install this package.": Null
+"You do not have sufficient privileges to edit this user.": Null
 "You have been invited to join": Null
 "You have made too many login attempts.": Null
 "You have registered successfully.": Null
@@ -1280,7 +1301,7 @@
 "Your GitHub settings were saved.": Null
 "Your information was saved.": Null
 "Your IP address is": Null
-"Your new API key, known internally as %s, is %s": Null
+"Your new API key, known internally as <strong>%s</strong>, is:<br />%s<br />": Null
 "Your password has been changed": Null
 "Your password has been changed.": Null
 "Your password has been changed successfully.": Null
