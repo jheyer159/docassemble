@@ -1,37 +1,47 @@
-import yaml
 import os
 import re
 import sys
-import httplib2
 import socket
-import pkg_resources
 import threading
 import base64
 import json
+from packaging import version
+import yaml
+import httplib2
+import pkg_resources
+import boto3
+from azure.identity import DefaultAzureCredential
+from azure.keyvault.secrets import SecretClient
+import docassemble.base.amazon
+import docassemble.base.microsoft
 from docassemble.base.generate_key import random_string
-from distutils.version import LooseVersion
 
 dbtableprefix = None
-daconfig = dict()
-s3_config = dict()
+daconfig = {}
+s3_config = {}
 S3_ENABLED = False
-gc_config = dict()
+gc_config = {}
 GC_ENABLED = False
-azure_config = dict()
+azure_config = {}
 AZURE_ENABLED = False
 hostname = None
 loaded = False
 in_celery = False
-errors = list()
-env_messages = list()
+in_cron = False
+errors = []
+env_messages = []
+allowed = {}
+
 
 def env_true_false(var):
     value = str(os.getenv(var, 'false')).lower().strip()
     return value == 'true'
 
+
 def env_exists(var):
     value = os.getenv(var)
     return value is not None
+
 
 def env_translate(var):
     value = str(os.getenv(var)).strip()
@@ -44,6 +54,7 @@ def env_translate(var):
     if re.match(r'^\-?[0-9]+$', value):
         return int(value)
     return value
+
 
 def override_config(the_config, messages, key, var, pre_key=None):
     value = env_translate(var)
@@ -58,17 +69,22 @@ def override_config(the_config, messages, key, var, pre_key=None):
             messages.append("The value of configuration key %s has been set to %s based on the value of environment variable %s" % (key, value, var))
         the_config[key] = value
     else:
-        if pre_key not in the_config:
-            the_config[pre_key] = dict()
-        if key in the_config[pre_key] and str(the_config[pre_key][key]) != str(value):
-            messages.append("The value of configuration key %s in %s has been replaced with %s based on the value of environment variable %s" % (key, pre_key, value, var))
-        elif key not in the_config[pre_key]:
-            messages.append("The value of configuration key %s in %s has been set to %s based on the value of environment variable %s" % (key, pre_key, value, var))
-        the_config[pre_key][key] = value
+        root = the_config
+        for the_key in pre_key:
+            if the_key not in root:
+                root[the_key] = {}
+            root = root[the_key]
+        if key in root and str(root[key]) != str(value):
+            messages.append("The value of configuration key %s in %s has been replaced with %s based on the value of environment variable %s" % (key, ", ".join(pre_key), value, var))
+        elif key not in root:
+            messages.append("The value of configuration key %s in %s has been set to %s based on the value of environment variable %s" % (key, ", ".join(pre_key), value, var))
+        root[key] = value
+
 
 def config_error(error):
     errors.append(error)
     sys.stderr.write(error + "\n")
+
 
 def cleanup_filename(filename):
     filename = filename.strip()
@@ -79,14 +95,16 @@ def cleanup_filename(filename):
         return parts[0] + ':' + 'data/questions/' + parts[1]
     return filename
 
+
 def delete_environment():
-    for var in ('DBSSLMODE', 'DBSSLCERT', 'DBSSLKEY', 'DBSSLROOTCERT', 'DBTYPE', 'DBPREFIX', 'DBNAME', 'DBUSER', 'DBPASSWORD', 'DBHOST', 'DBPORT', 'DBTABLEPREFIX', 'DBBACKUP', 'DASECRETKEY', 'DABACKUPDAYS', 'ENVIRONMENT_TAKES_PRECEDENCE', 'DASTABLEVERSION', 'DASSLPROTOCOLS', 'SERVERADMIN', 'REDIS', 'REDISCLI', 'RABBITMQ', 'DACELERYWORKERS', 'S3ENABLE', 'S3ACCESSKEY', 'S3SECRETACCESSKEY', 'S3BUCKET', 'S3REGION', 'S3ENDPOINTURL', 'AZUREENABLE', 'AZUREACCOUNTKEY', 'AZUREACCOUNTNAME', 'AZURECONTAINER', 'AZURECONNECTIONSTRING', 'EC2', 'COLLECTSTATISTICS', 'KUBERNETES', 'LOGSERVER', 'USECLOUDURLS', 'USEMINIO', 'USEHTTPS', 'USELETSENCRYPT', 'LETSENCRYPTEMAIL', 'BEHINDHTTPSLOADBALANCER', 'XSENDFILE', 'DAUPDATEONSTART', 'URLROOT', 'DAHOSTNAME', 'DAEXPOSEWEBSOCKETS', 'DAWEBSOCKETSIP', 'DAWEBSOCKETSPORT', 'POSTURLROOT', 'DAWEBSERVER', 'DASQLPING', 'PORT', 'OTHERLOCALES', 'DAMAXCONTENTLENGTH', 'DACELERYWORKERS', 'PACKAGES', 'PYTHONPACKAGES', 'DAALLOWUPDATES', 'AWS_SECRET_ACCESS_KEY', 'AWS_ACCESS_KEY_ID', 'S4CMD_OPTS', 'WSGIROOT', 'DATIMEOUT'):
+    for var in ('DBSSLMODE', 'DBSSLCERT', 'DBSSLKEY', 'DBSSLROOTCERT', 'DBTYPE', 'DBPREFIX', 'DBNAME', 'DBUSER', 'DBPASSWORD', 'DBHOST', 'DBPORT', 'DBTABLEPREFIX', 'DBBACKUP', 'DASECRETKEY', 'DABACKUPDAYS', 'ENVIRONMENT_TAKES_PRECEDENCE', 'DASTABLEVERSION', 'DASSLPROTOCOLS', 'SERVERADMIN', 'REDIS', 'REDISCLI', 'RABBITMQ', 'DACELERYWORKERS', 'S3ENABLE', 'S3ACCESSKEY', 'S3SECRETACCESSKEY', 'S3BUCKET', 'S3REGION', 'S3ENDPOINTURL', 'S3_SSE_ALGORITHM', 'S3_SSE_CUSTOMER_ALGORITHM', 'S3_SSE_CUSTOMER_KEY', 'S3_SSE_KMS_KEY_ID', 'AZUREENABLE', 'AZUREACCOUNTKEY', 'AZUREACCOUNTNAME', 'AZURECONTAINER', 'AZURECONNECTIONSTRING', 'EC2', 'COLLECTSTATISTICS', 'KUBERNETES', 'LOGSERVER', 'USECLOUDURLS', 'USEMINIO', 'USEHTTPS', 'USELETSENCRYPT', 'LETSENCRYPTEMAIL', 'BEHINDHTTPSLOADBALANCER', 'XSENDFILE', 'DAUPDATEONSTART', 'URLROOT', 'DAHOSTNAME', 'DAEXPOSEWEBSOCKETS', 'DAWEBSOCKETSIP', 'DAWEBSOCKETSPORT', 'POSTURLROOT', 'DAWEBSERVER', 'DASQLPING', 'PORT', 'OTHERLOCALES', 'DAMAXCONTENTLENGTH', 'DACELERYWORKERS', 'PACKAGES', 'PYTHONPACKAGES', 'DAALLOWUPDATES', 'AWS_SECRET_ACCESS_KEY', 'AWS_ACCESS_KEY_ID', 'AWS_DEFAULT_REGION', 'S4CMD_OPTS', 'WSGIROOT', 'DATIMEOUT', 'PIPINDEXURL', 'PIPEXTRAINDEXURLS', 'DAALLOWCONFIGURATIONEDITING', 'DADEBUG', 'DAENABLEPLAYGROUND', 'DAALLOWLOGVIEWING', 'DAROOTOWNED', 'DAREADONLYFILESYSTEM', 'DASUPERVISORUSERNAME', 'DASUPERVISORPASSWORD'):
         if var in os.environ:
             del os.environ[var]
 
 this_thread = threading.local()
-this_thread.botoclient = dict()
-this_thread.azureclient = dict()
+this_thread.botoclient = {}
+this_thread.azureclient = {}
+
 
 def aws_get_region(arn):
     m = re.search(r'arn:aws:secretsmanager:([^:]+):', arn)
@@ -94,10 +112,10 @@ def aws_get_region(arn):
         return m.group(1)
     return 'us-east-1'
 
+
 def aws_get_secret(data):
     region = aws_get_region(data)
     if region not in this_thread.botoclient:
-        import boto3
         if env_exists('AWSACCESSKEY') and env_exists('AWSSECRETACCESSKEY'):
             sys.stderr.write("Using access keys\n")
             session = boto3.session.Session(aws_access_key_id=os.environ['AWSACCESSKEY'], aws_secret_access_key=os.environ['AWSSECRETACCESSKEY'])
@@ -106,7 +124,7 @@ def aws_get_secret(data):
             session = boto3.session.Session()
         this_thread.botoclient[region] = session.client(
             service_name='secretsmanager',
-	    region_name=region,
+            region_name=region
         )
     try:
         response = this_thread.botoclient[region].get_secret_value(SecretId=data)
@@ -137,11 +155,12 @@ def aws_get_secret(data):
         sys.stderr.write("aws_get_secret: problem decoding JSON\n")
     return result
 
+
 def azure_get_secret(data):
     vault_name = None
     secret_name = None
     secret_version = None
-    m = re.search('^@Microsoft.KeyVault\(([^\)]+)\)', data)
+    m = re.search(r'^@Microsoft.KeyVault\(([^\)]+)\)', data)
     if m:
         parts = m.group(1).split(';')
         for part in parts:
@@ -167,8 +186,6 @@ def azure_get_secret(data):
     if vault_name is None or secret_name is None:
         return data
     if vault_name not in this_thread.azureclient:
-        from azure.identity import DefaultAzureCredential
-        from azure.keyvault.secrets import SecretClient
         try:
             credential = DefaultAzureCredential()
             this_thread.azureclient[vault_name] = SecretClient(vault_url="https://" + vault_name + ".vault.azure.net/", credential=credential)
@@ -202,6 +219,7 @@ def azure_get_secret(data):
         data = secret_data.value
     return data
 
+
 def recursive_fetch_cloud(data):
     if isinstance(data, str):
         if data.startswith('arn:aws:secretsmanager:'):
@@ -209,18 +227,22 @@ def recursive_fetch_cloud(data):
         elif data.startswith('@Microsoft.KeyVault('):
             data = azure_get_secret(data.strip())
         return data
-    elif isinstance(data, (int, float, bool)):
+    if isinstance(data, (int, float, bool)):
         return data
-    elif isinstance(data, list):
+    if isinstance(data, list):
         return [recursive_fetch_cloud(y) for y in data]
-    elif isinstance(data, dict):
+    if isinstance(data, dict):
         return {k: recursive_fetch_cloud(v) for k, v in data.items()}
-    elif isinstance(data, set):
+    if isinstance(data, set):
         return {recursive_fetch_cloud(y) for y in data}
-    elif isinstance(data, tuple):
-        return tuple([recursive_fetch_cloud(y) for y in data])
-    else:
-        return data
+    if isinstance(data, tuple):
+        return tuple(recursive_fetch_cloud(y) for y in data)
+    return data
+
+
+def fix_authorized_domain(domain):
+    return '@' + re.sub(r'^@+', '', domain.lower().strip())
+
 
 def load(**kwargs):
     global daconfig
@@ -234,6 +256,7 @@ def load(**kwargs):
     global hostname
     global loaded
     global in_celery
+    global in_cron
     global env_messages
     # changed = False
     filename = None
@@ -247,11 +270,13 @@ def load(**kwargs):
         filename = kwargs.get('filename', os.getenv('DA_CONFIG_FILE', '/usr/share/docassemble/config/config.yml'))
     if 'in_celery' in kwargs and kwargs['in_celery']:
         in_celery = True
+    if 'in_cron' in kwargs and kwargs['in_cron']:
+        in_cron = True
     if not os.path.isfile(filename):
         if not os.access(os.path.dirname(filename), os.W_OK):
             sys.stderr.write("Configuration file " + str(filename) + " does not exist and cannot be created\n")
             sys.exit(1)
-        with open(filename, 'w') as config_file:
+        with open(filename, 'w', encoding='utf-8') as config_file:
             config_file.write(default_config())
             sys.stderr.write("Wrote configuration file to " + str(filename) + "\n")
     if not os.path.isfile(filename):
@@ -292,18 +317,25 @@ def load(**kwargs):
             daconfig['system version'] = fp.read().strip()
     else:
         daconfig['system version'] = '0.1.12'
-    if LooseVersion(daconfig['system version']) >= LooseVersion('1.2.50'):
+    if version.parse(daconfig['system version']) >= version.parse('1.2.50'):
         daconfig['has_celery_single_queue'] = True
     else:
         daconfig['has_celery_single_queue'] = False
+    null_messages = []
+    for env_var, key in (('DASUPERVISORUSERNAME', 'username'), ('DASUPERVISORPASSWORD', 'password')):
+        value = os.getenv(env_var)
+        if value not in (None, ''):
+            override_config(daconfig, null_messages, key, env_var, pre_key=['supervisor'])
     if env_true_false('ENVIRONMENT_TAKES_PRECEDENCE'):
-        null_messages = list()
         for env_var, key in (('S3ENABLE', 'enable'), ('S3ACCESSKEY', 'access key id'), ('S3SECRETACCESSKEY', 'secret access key'), ('S3BUCKET', 'bucket'), ('S3REGION', 'region'), ('S3ENDPOINTURL', 'endpoint url')):
             if env_exists(env_var):
-                override_config(daconfig, null_messages, key, env_var, pre_key='s3')
+                override_config(daconfig, null_messages, key, env_var, pre_key=['s3'])
+        for env_var, key in (('S3_SSE_ALGORITHM', 'algorithm'), ('S3_SSE_CUSTOMER_ALGORITHM', 'customer algorithm'), ('S3_SSE_CUSTOMER_KEY', 'customer key'), ('S3_SSE_KMS_KEY_ID', 'KMS key ID')):
+            if env_exists(env_var):
+                override_config(daconfig, null_messages, key, env_var, pre_key=['s3', 'server side encryption'])
         for env_var, key in (('AZUREENABLE', 'enable'), ('AZUREACCOUNTKEY', 'account key'), ('AZUREACCOUNTNAME', 'account name'), ('AZURECONTAINER', 'container'), ('AZURECONNECTIONSTRING', 'connection string')):
             if env_exists(env_var):
-                override_config(daconfig, null_messages, key, env_var, pre_key='azure')
+                override_config(daconfig, null_messages, key, env_var, pre_key=['azure'])
         if env_exists('KUBERNETES'):
             override_config(daconfig, null_messages, 'kubernetes', 'KUBERNETES')
     s3_config = daconfig.get('s3', None)
@@ -340,15 +372,18 @@ def load(**kwargs):
     else:
         hostname = os.getenv('SERVERHOSTNAME', socket.gethostname())
     if S3_ENABLED:
-        import docassemble.webapp.amazon
-        cloud = docassemble.webapp.amazon.s3object(s3_config)
+        cloud = docassemble.base.amazon.s3object(s3_config)
     elif AZURE_ENABLED:
-        import docassemble.webapp.microsoft
-        cloud = docassemble.webapp.microsoft.azureobject(azure_config)
+        cloud = docassemble.base.microsoft.azureobject(azure_config)
         if ('key vault name' in azure_config and azure_config['key vault name'] is not None and 'managed identity' in azure_config and azure_config['managed identity'] is not None):
             daconfig = cloud.load_with_secrets(daconfig)
     else:
         cloud = None
+    if 'supervisor' in daconfig:
+        if not (isinstance(daconfig['supervisor'], dict) and daconfig['supervisor'].get('username', None) and daconfig['supervisor'].get('password', None)):
+            daconfig['supervisor'] = {}
+    else:
+        daconfig['supervisor'] = {}
     if 'suppress error notificiations' in daconfig and isinstance(daconfig['suppress error notificiations'], list):
         ok = True
         for item in daconfig['suppress error notificiations']:
@@ -360,6 +395,12 @@ def load(**kwargs):
             config_error("Configuration file suppress error notifications directive not valid")
     else:
         daconfig['suppress error notificiations'] = []
+    if 'words' not in daconfig:
+        daconfig['words'] = ['docassemble.base:data/sources/us-words.yml']
+    if 'concurrency lock timeout' in daconfig:
+        if not (isinstance(daconfig['concurrency lock timeout'], int) and daconfig['concurrency lock timeout'] > 0):
+            config_error("The value of concurrency lock timeout is invalid.")
+            del daconfig['concurrency lock timeout']
     if 'maximum content length' in daconfig:
         if isinstance(daconfig['maximum content length'], (int, type(None))):
             if daconfig['maximum content length'] is not None and daconfig['maximum content length'] <= 0:
@@ -369,14 +410,21 @@ def load(**kwargs):
             del daconfig['maximum content length']
     if 'maximum content length' not in daconfig:
         daconfig['maximum content length'] = 16 * 1024 * 1024
+    new_button_colors = {}
+    if 'button colors' in daconfig and isinstance(daconfig['button colors'], dict):
+        for button_type, color in daconfig['button colors'].items():
+            if isinstance(button_type, str) and isinstance(color, str):
+                new_button_colors[button_type] = color
+    daconfig['button colors'] = new_button_colors
+    del new_button_colors
     if 'social' not in daconfig or not isinstance(daconfig['social'], dict):
-        daconfig['social'] = dict()
+        daconfig['social'] = {}
     if 'twitter' not in daconfig['social'] or not isinstance(daconfig['social']['twitter'], dict):
-        daconfig['social']['twitter'] = dict()
+        daconfig['social']['twitter'] = {}
     if 'og' not in daconfig['social'] or not isinstance(daconfig['social']['og'], dict):
-        daconfig['social']['og'] = dict()
+        daconfig['social']['og'] = {}
     if 'fb' not in daconfig['social'] or not isinstance(daconfig['social']['fb'], dict):
-        daconfig['social']['fb'] = dict()
+        daconfig['social']['fb'] = {}
     for key in list(daconfig['social'].keys()):
         if key in ('og', 'twitter', 'fb'):
             continue
@@ -400,7 +448,7 @@ def load(**kwargs):
         del daconfig['social']['og']['url']
     if 'administrative interviews' in daconfig:
         if isinstance(daconfig['administrative interviews'], list):
-            new_admin_interviews = list()
+            new_admin_interviews = []
             for item in daconfig['administrative interviews']:
                 if isinstance(item, str):
                     new_item = cleanup_filename(item)
@@ -529,11 +577,13 @@ def load(**kwargs):
             daconfig['db']['port'] = '3306'
         elif daconfig['db']['prefix'].startswith('oracle'):
             daconfig['db']['port'] = '1521'
+    if 'default admin account' in daconfig:
+        config_error('For security, delete the default admin account directive, which is no longer needed')
     if 'ocr languages' not in daconfig:
-        daconfig['ocr languages'] = dict()
+        daconfig['ocr languages'] = {}
     if not isinstance(daconfig['ocr languages'], dict):
         config_error('ocr languages must be a dict')
-        daconfig['ocr languages'] = dict()
+        daconfig['ocr languages'] = {}
     if 'zh' not in daconfig['ocr languages']:
         daconfig['ocr languages']['zh'] = 'chi-tra'
     if 'attempt limit' not in daconfig:
@@ -568,18 +618,75 @@ def load(**kwargs):
     if daconfig['verification code timeout'] < 1:
         config_error('verification code timeout must be one or greater')
         daconfig['verification code timeout'] = 180
+    if 'module whitelist' in daconfig:
+        if isinstance(daconfig['module whitelist'], list):
+            daconfig['module whitelist'] = [y.strip() for y in daconfig['module whitelist'] if isinstance(y, str)]
+        else:
+            del daconfig['module whitelist']
+    if 'module blacklist' in daconfig:
+        if isinstance(daconfig['module blacklist'], list):
+            daconfig['module blacklist'] = [y.strip() for y in daconfig['module blacklist'] if isinstance(y, str)]
+        else:
+            daconfig['module blacklist'] = []
+    else:
+        daconfig['module blacklist'] = []
+    if 'user profile fields' in daconfig:
+        if isinstance(daconfig['user profile fields'], list):
+            daconfig['user profile fields'] = [y for y in daconfig['user profile fields'] if y in ('first_name', 'last_name', 'country', 'subdivisionfirst', 'subdivisionsecond', 'subdivisionthird', 'organization', 'timezone', 'language')]
+        else:
+            config_error('user profile fields must be a list')
+            daconfig['user profile fields'] = []
+    else:
+        daconfig['user profile fields'] = []
+    if 'permissions' in daconfig:
+        if not isinstance(daconfig['permissions'], dict):
+            config_error("permissions must be in the form of a dict")
+            daconfig['permissions'] = {}
+        has_error = False
+        for key, val in daconfig['permissions'].items():
+            if key in ('admin', 'developer', 'cron', 'user'):
+                config_error("permissions cannot be used to change the allowed actions of the " + key + " privilege")
+                has_error = True
+                break
+            if not (isinstance(key, str) and isinstance(val, list)):
+                config_error("permissions must be a dictionary where the keys are strings and the values are lists")
+                has_error = True
+                break
+            for item in val:
+                if not isinstance(item, str):
+                    config_error("permissions must be a dictionary where the values are lists of strings")
+                    has_error = True
+                    break
+            if has_error:
+                break
+        if has_error:
+            daconfig['permissions'] = {}
+        for key, val in daconfig['permissions'].items():
+            if key not in allowed:
+                allowed[key] = set()
+            for item in val:
+                allowed[key].add(item)
     if 'api privileges' in daconfig:
         if not isinstance(daconfig['api privileges'], list):
             config_error("api privileges must be in the form of a list")
             daconfig['api privileges'] = ['admin', 'developer']
     else:
         daconfig['api privileges'] = ['admin', 'developer']
+    authorized_domains = []
+    if 'authorized registration domains' in daconfig:
+        if isinstance(daconfig['authorized registration domains'], str):
+            authorized_domains.append(fix_authorized_domain(daconfig['authorized registration domains']))
+        elif isinstance(daconfig['authorized registration domains'], list):
+            for domain in daconfig['authorized registration domains']:
+                if isinstance(domain, str):
+                    authorized_domains.append(fix_authorized_domain(domain))
+    daconfig['authorized registration domains'] = authorized_domains
     if 'two factor authentication' in daconfig:
         if isinstance(daconfig['two factor authentication'], bool):
             daconfig['two factor authentication'] = dict(enable=daconfig['two factor authentication'])
         if not isinstance(daconfig['two factor authentication'], dict):
             config_error('two factor authentication must be boolean or a dict')
-            daconfig['two factor authentication'] = dict()
+            daconfig['two factor authentication'] = {}
     else:
         daconfig['two factor authentication'] = dict(enable=False)
     if 'allowed for' in daconfig['two factor authentication']:
@@ -631,7 +738,7 @@ def load(**kwargs):
     try:
         assert isinstance(daconfig['jinja data'], dict)
     except:
-        daconfig['jinja data'] = dict()
+        daconfig['jinja data'] = {}
     if daconfig.get('default icons', None) == 'font awesome':
         daconfig['use font awesome'] = True
     if 'websockets port' in daconfig and daconfig['websockets port']:
@@ -641,14 +748,14 @@ def load(**kwargs):
             config_error("websockets port must be an integer")
             del daconfig['websockets port']
     if 'mail' not in daconfig:
-        daconfig['mail'] = dict()
+        daconfig['mail'] = {}
     if 'dispatch' not in daconfig:
-        daconfig['dispatch'] = dict()
+        daconfig['dispatch'] = {}
     if not isinstance(daconfig['dispatch'], dict):
         config_error("dispatch must be structured as a dictionary")
-        daconfig['dispatch'] = dict()
+        daconfig['dispatch'] = {}
     if len(daconfig['dispatch']):
-        new_dispatch = dict()
+        new_dispatch = {}
         for shortcut, filename in daconfig['dispatch'].items():
             if isinstance(shortcut, str) and isinstance(filename, str):
                 new_filename = cleanup_filename(filename)
@@ -656,7 +763,7 @@ def load(**kwargs):
                     new_dispatch[shortcut] = new_filename
         daconfig['dispatch'] = new_dispatch
     if 'interview delete days by filename' in daconfig and isinstance(daconfig['interview delete days by filename'], dict):
-        new_delete_days = dict()
+        new_delete_days = {}
         for filename, days in daconfig['interview delete days by filename'].items():
             new_filename = cleanup_filename(filename)
             if new_filename:
@@ -671,10 +778,10 @@ def load(**kwargs):
             else:
                 del daconfig[key]
     if 'ldap login' not in daconfig:
-        daconfig['ldap login'] = dict()
+        daconfig['ldap login'] = {}
     if not isinstance(daconfig['ldap login'], dict):
         config_error("ldap login must be structured as a dictionary")
-        daconfig['ldap login'] = dict()
+        daconfig['ldap login'] = {}
     if daconfig.get('auto resume interview', None) is not None:
         daconfig['show interviews link'] = False
     if 'use minio' not in daconfig:
@@ -684,7 +791,7 @@ def load(**kwargs):
     if 'use cloud urls' not in daconfig:
         daconfig['use cloud urls'] = False
     else:
-        daconfig['use cloud urls'] = True if daconfig['use cloud urls'] else False
+        daconfig['use cloud urls'] = bool(daconfig['use cloud urls'])
     if 'use https' not in daconfig or not daconfig['use https']:
         daconfig['use https'] = False
     if 'use lets encrypt' not in daconfig or not daconfig['use lets encrypt']:
@@ -702,10 +809,10 @@ def load(**kwargs):
     if 'table css class' not in daconfig or not isinstance(daconfig['table css class'], str):
         daconfig['table css class'] = 'table table-striped'
     if env_true_false('ENVIRONMENT_TAKES_PRECEDENCE'):
-        messages = list()
-        for env_var, key in (('DBPREFIX', 'prefix'), ('DBNAME', 'name'), ('DBUSER', 'user'), ('DBPASSWORD', 'password'), ('DBHOST', 'host'), ('DBPORT', 'port'), ('DBTABLEPREFIX', 'table prefix'), ('DBBACKUP', 'backup')):
+        messages = []
+        for env_var, key in (('DBPREFIX', 'prefix'), ('DBNAME', 'name'), ('DBUSER', 'user'), ('DBPASSWORD', 'password'), ('DBHOST', 'host'), ('DBPORT', 'port'), ('DBTABLEPREFIX', 'table prefix'), ('DBBACKUP', 'backup'), ('DBSSLMODE', 'ssl mode'), ('DBSSLCERT', 'ssl cert'), ('DBSSLKEY', 'ssl key'), ('DBSSLROOTCERT', 'ssl root cert')):
             if env_exists(env_var):
-                override_config(daconfig, messages, key, env_var, pre_key='db')
+                override_config(daconfig, messages, key, env_var, pre_key=['db'])
         if env_exists('DASECRETKEY'):
             override_config(daconfig, messages, 'secretkey', 'DASECRETKEY')
             daconfig['secretkey'] = env_translate('DASECRETKEY')
@@ -727,12 +834,19 @@ def load(**kwargs):
             override_config(daconfig, messages, 'rabbitmq', 'RABBITMQ')
         if env_exists('DACELERYWORKERS'):
             override_config(daconfig, messages, 'celery processes', 'DACELERYWORKERS')
+        if env_exists('PIPINDEXURL'):
+            override_config(daconfig, messages, 'pip index url', 'PIPINDEXURL')
+        if env_exists('PIPEXTRAINDEXURLS'):
+            override_config(daconfig, messages, 'pip extra index urls', 'PIPEXTRAINDEXURLS')
         for env_var, key in (('S3ENABLE', 'enable'), ('S3ACCESSKEY', 'access key id'), ('S3SECRETACCESSKEY', 'secret access key'), ('S3BUCKET', 'bucket'), ('S3REGION', 'region'), ('S3ENDPOINTURL', 'endpoint url')):
             if env_exists(env_var):
-                override_config(daconfig, messages, key, env_var, pre_key='s3')
+                override_config(daconfig, messages, key, env_var, pre_key=['s3'])
+        for env_var, key in (('S3_SSE_ALGORITHM', 'algorithm'), ('S3_SSE_CUSTOMER_ALGORITHM', 'customer algorithm'), ('S3_SSE_CUSTOMER_KEY', 'customer key'), ('S3_SSE_KMS_KEY_ID', 'KMS key ID')):
+            if env_exists(env_var):
+                override_config(daconfig, messages, key, env_var, pre_key=['s3', 'server side encryption'])
         for env_var, key in (('AZUREENABLE', 'enable'), ('AZUREACCOUNTKEY', 'account key'), ('AZUREACCOUNTNAME', 'account name'), ('AZURECONTAINER', 'container'), ('AZURECONNECTIONSTRING', 'connection string')):
             if env_exists(env_var):
-                override_config(daconfig, messages, key, env_var, pre_key='azure')
+                override_config(daconfig, messages, key, env_var, pre_key=['azure'])
         if env_exists('EC2'):
             override_config(daconfig, messages, 'ec2', 'EC2')
         if env_exists('COLLECTSTATISTICS'):
@@ -775,8 +889,22 @@ def load(**kwargs):
             override_config(daconfig, messages, 'sql ping', 'DASQLPING')
         if env_exists('PORT'):
             override_config(daconfig, messages, 'http port', 'PORT')
+        if env_exists('DAALLOWUPDATES'):
+            override_config(daconfig, messages, 'allow updates', 'DAALLOWUPDATES')
+        if env_exists('DAALLOWCONFIGURATIONEDITING'):
+            override_config(daconfig, messages, 'allow configuration editing', 'DAALLOWCONFIGURATIONEDITING')
+        if env_exists('DAENABLEPLAYGROUND'):
+            override_config(daconfig, messages, 'enable playground', 'DAENABLEPLAYGROUND')
+        if env_exists('DADEBUG'):
+            override_config(daconfig, messages, 'debug', 'DADEBUG')
+        if env_exists('DAALLOWLOGVIEWING'):
+            override_config(daconfig, messages, 'allow log viewing', 'DAALLOWLOGVIEWING')
+        if env_exists('DAROOTOWNED'):
+            override_config(daconfig, messages, 'root owned', 'DAROOTOWNED')
+        if env_exists('DAREADONLYFILESYSTEM'):
+            override_config(daconfig, messages, 'read only file system', 'DAREADONLYFILESYSTEM')
         env_messages = messages
-    return
+
 
 def default_config():
     config = """\
@@ -786,30 +914,40 @@ mail:
 """
     return config
 
+
 def parse_redis_uri():
-    redis_host = daconfig.get('redis', None)
-    if redis_host is None:
-        redis_host = 'redis://localhost'
-    redis_host = redis_host.strip()
-    if not redis_host.startswith('redis://'):
-        redis_host = 'redis://' + redis_host
-    m = re.search(r'redis://([^:@\?]*):([^:@\?]*)@(.*)', redis_host)
+    redis_url = daconfig.get('redis', None)
+    if redis_url is None:
+        redis_url = 'redis://localhost'
+    redis_url = redis_url.strip()
+    if not (redis_url.startswith('redis://') or redis_url.startswith('rediss://')):
+        redis_url = 'redis://' + redis_url
+    m = re.search(r'(rediss?://)([^:@\?]*):([^:@\?]*)@(.*)', redis_url)
     if m:
-        redis_password = m.group(2)
-        redis_host = 'redis://' + m.group(3)
+        redis_username = m.group(2)
+        if redis_username == '':
+            redis_username = None
+        redis_password = m.group(3)
+        redis_url = m.group(1) + m.group(4)
     else:
-        redis_password = None
-    m = re.search(r'[?\&]password=([^&]+)', redis_host)
+        redis_username = None
+        m = re.search(r'rediss?://([^:@\?]*)@(.*)', redis_url)
+        if m:
+            redis_password = m.group(1)
+        else:
+            redis_password = None
+    m = re.search(r'[?\&]password=([^&]+)', redis_url)
     if m:
         redis_password = m.group(1)
-    m = re.search(r'[?\&]db=([0-9]+)', redis_host)
+    m = re.search(r'[?\&]db=([0-9]+)', redis_url)
     if m:
         redis_db = int(m.group(1))
     else:
         redis_db = 0
 
-    redis_host = re.sub(r'\?.*', '', redis_host)
-    redis_host = re.sub(r'^redis://', r'', redis_host)
+    redis_host = re.sub(r'\?.*', '', redis_url)
+    redis_host = re.sub(r'^rediss?://', r'', redis_host)
+    redis_host = re.sub(r'^.*@', r'', redis_host)
     m = re.search(r'/([0-9]+)', redis_host)
     if m:
         redis_db = int(m.group(1))
@@ -822,12 +960,43 @@ def parse_redis_uri():
         redis_port = '6379'
 
     redis_offset = daconfig.get('redis database offset', redis_db)
+    if redis_url.startswith('rediss://'):
+        redis_ssl = True
+        directory = daconfig.get('cert install directory', '/etc/ssl/docassemble')
+        redis_ca_cert = os.path.join(directory, 'redis_ca.crt')
+        redis_cert = os.path.join(directory, 'redis.crt')
+        redis_key = os.path.join(directory, 'redis.key')
+        if not os.path.isfile(redis_ca_cert):
+            redis_ca_cert = None
+        if not os.path.isfile(redis_cert):
+            redis_cert = None
+        if not os.path.isfile(redis_key):
+            redis_key = None
+    else:
+        redis_ssl = False
+        redis_ca_cert = None
+        redis_cert = None
+        redis_key = None
     redis_cli = 'redis-cli'
     if redis_host != 'localhost' or redis_port != '6379':
         redis_cli += ' -h ' + redis_host + ' -p ' + redis_port
     if redis_password is not None:
         redis_cli += ' -a ' + redis_password
-    return (redis_host, redis_port, redis_password, redis_offset, redis_cli)
+    ssl_opts = {}
+    if redis_ssl:
+        redis_cli += ' --tls'
+        ssl_opts['ssl'] = True
+        if redis_ca_cert is not None:
+            redis_cli += '--cacert ' + json.dumps(redis_ca_cert)
+            ssl_opts['ssl_ca_certs'] = redis_ca_cert
+        if redis_cert is not None:
+            redis_cli += '--cert ' + json.dumps(redis_cert)
+            ssl_opts['ssl_certfile'] = redis_cert
+        if redis_key is not None:
+            redis_cli += ' --key ' + json.dumps(redis_key)
+            ssl_opts['ssl_keyfile'] = redis_key
+    return (redis_host, redis_port, redis_username, redis_password, redis_offset, redis_cli, ssl_opts)
+
 
 def noquote(string):
     if isinstance(string, str):

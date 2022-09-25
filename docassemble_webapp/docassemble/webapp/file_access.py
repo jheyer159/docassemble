@@ -1,39 +1,35 @@
-from docassemble.base.logger import logmessage
-
-import re
-import os
-import PyPDF2
-import tempfile
+from urllib.request import urlopen, Request
 import importlib
-try:
-    from urllib.request import urlopen, Request
-except ImportError:
-    from urllib2 import urlopen, Request
 import mimetypes
-from PIL import Image
-import xml.etree.ElementTree as ET
-import docassemble.base.functions
-from docassemble.webapp.users.models import UserDictKeys, UserRoles
-from docassemble.webapp.core.models import Uploads, UploadsUserAuth, UploadsRoleAuth
-from docassemble.webapp.files import SavedFile, get_ext_and_mimetype
-from flask import session
-from flask_login import current_user
-from docassemble.webapp.db_object import db
-from sqlalchemy import or_, and_, select
-import docassemble.base.config
-import sys
-from docassemble.base.generate_key import random_lower_string
+import os
+import re
 import subprocess
-
+# import sys
+import tempfile
+import xml.etree.ElementTree as ET
+import PyPDF2
+from PIL import Image
+from docassemble.base.generate_key import random_lower_string
+from docassemble.base.logger import logmessage
+import docassemble.base.config
+import docassemble.base.functions
+from docassemble.webapp.core.models import Uploads, UploadsUserAuth, UploadsRoleAuth
+from docassemble.webapp.db_object import db
+from docassemble.webapp.files import SavedFile, get_ext_and_mimetype
+from docassemble.webapp.users.models import UserDictKeys, UserRoles
 import docassemble.webapp.cloud
+from flask import session, url_for
+from flask_login import current_user
+from sqlalchemy import and_, select
+
 cloud = docassemble.webapp.cloud.get_cloud()
 
 QPDF_PATH = 'qpdf'
 
+
 def url_if_exists(file_reference, **kwargs):
     attach_parameter = '&attachment=1' if kwargs.get('_attachment', False) else ''
     parts = file_reference.split(":")
-    from flask import url_for
     base_url = url_for('rootindex', _external=kwargs.get('_external', False)).rstrip('/')
     if len(parts) == 2:
         if cloud and docassemble.base.config.daconfig.get('use cloud urls', False):
@@ -53,8 +49,7 @@ def url_if_exists(file_reference, **kwargs):
                     if cloud_key.does_exist:
                         if kwargs.get('_attachment', False):
                             return cloud_key.generate_url(3600, display_filename=filename)
-                        else:
-                            return cloud_key.generate_url(3600)
+                        return cloud_key.generate_url(3600)
                     return None
                 section = 'playgroundstatic'
                 filename = re.sub(r'^data/static/', '', parts[1])
@@ -67,6 +62,7 @@ def url_if_exists(file_reference, **kwargs):
         return base_url + '/packagestatic/' + parts[0] + '/' + re.sub(r'^data/static/', '', parts[1]) + version_parameter + attach_parameter
     return None
 
+
 def get_version_parameter(package):
     try:
         return '?v=' + str(importlib.import_module(package).__version__)
@@ -75,49 +71,14 @@ def get_version_parameter(package):
             return '?v=' + random_lower_string(6)
         return ''
 
-def reference_exists(file_reference):
-    if cloud:
-        parts = file_reference.split(":")
-        if len(parts) == 2:
-            m = re.search(r'^docassemble.playground([0-9]+)$', parts[0])
-            if m:
-                user_id = m.group(1)
-                if re.search(r'^data/sources/', parts[1]):
-                    section = 'playgroundsources'
-                    filename = re.sub(r'^data/sources/', '', parts[1])
-                else:
-                    section = 'playgroundstatic'
-                    filename = re.sub(r'^data/static/', '', parts[1])
-                filename = re.sub(r'[^A-Za-z0-9\-\_\. ]', '', filename)
-                key = str(section) + '/' + str(user_id) + '/' + filename
-                cloud_key = cloud.get_key(key)
-                if cloud_key.does_exist:
-                    return True
-                return False
-    the_path = docassemble.base.functions.static_filename_path(file_reference)
-    if the_path is None or not os.path.isfile(the_path):
-        #logmessage("Returning false")
-        return False
-    #logmessage("Returning true because path is " + str(the_path))
-    return True
 
 def get_info_from_file_reference(file_reference, **kwargs):
-    #sys.stderr.write('file reference is ' + str(file_reference) + "\n")
-    #logmessage('file reference is ' + str(file_reference))
-    if 'convert' in kwargs:
-        convert = kwargs['convert']
-    else:
-        convert = None
-    if 'privileged' in kwargs:
-        privileged = kwargs['privileged']
-    else:
-        privileged = None
+    # logmessage('file reference is ' + str(file_reference))
+    convert = kwargs.get('convert', None)
+    privileged = kwargs.get('privileged', None)
     has_info = False
     if re.search(r'^[0-9]+$', str(file_reference)):
-        if 'uids' in kwargs:
-            uids = kwargs['uids']
-        else:
-            uids = None
+        uids = kwargs.get('uids', None)
         if uids is None or len(uids) == 0:
             new_uid = docassemble.base.functions.get_uid()
             if new_uid is not None:
@@ -132,36 +93,36 @@ def get_info_from_file_reference(file_reference, **kwargs):
             result['fullpath'] = None
         has_info = True
     elif re.search(r'^https?://', str(file_reference)):
-        #logmessage("get_info_from_file_reference: " + str(file_reference) + " is a URL")
+        # logmessage("get_info_from_file_reference: " + str(file_reference) + " is a URL")
         possible_filename = re.sub(r'.*/', '', file_reference)
         if possible_filename == '':
             possible_filename = 'index.html'
         if re.search(r'\.', possible_filename):
             (possible_ext, possible_mimetype) = get_ext_and_mimetype(possible_filename)
             possible_ext = re.sub(r'[^A-Za-z0-9\.].*', '', possible_ext)
-            #logmessage("get_info_from_file_reference: starting with " + str(possible_ext) + " and " + str(possible_mimetype))
+            # logmessage("get_info_from_file_reference: starting with " + str(possible_ext) + " and " + str(possible_mimetype))
         else:
             possible_ext = 'txt'
             possible_mimetype = 'text/plain'
-        result = dict()
+        result = {}
         temp_file = tempfile.NamedTemporaryFile(prefix="datemp", suffix='.' + possible_ext, delete=False)
-        req = Request(file_reference, headers={'User-Agent' : docassemble.base.config.daconfig.get('user agent', 'curl/7.64.0')})
+        req = Request(file_reference, headers={'User-Agent': docassemble.base.config.daconfig.get('user agent', 'curl/7.64.0')})
         response = urlopen(req)
         temp_file.write(response.read())
-        #(local_filename, headers) = urllib.urlretrieve(file_reference)
+        # (local_filename, headers) = urllib.urlretrieve(file_reference)
         result['fullpath'] = temp_file.name
         try:
-            #result['mimetype'] = headers.gettype()
+            # result['mimetype'] = headers.gettype()
             result['mimetype'] = response.headers['Content-Type']
-            #logmessage("get_info_from_file_reference: mimetype is " + str(result['mimetype']))
-        except Exception as errmess:
+            # logmessage("get_info_from_file_reference: mimetype is " + str(result['mimetype']))
+        except Exception:
             logmessage("get_info_from_file_reference: could not get mimetype from headers")
             result['mimetype'] = possible_mimetype
             result['extension'] = possible_ext
         if 'extension' not in result:
-            #logmessage("get_info_from_file_reference: extension not in result")
+            # logmessage("get_info_from_file_reference: extension not in result")
             result['extension'] = re.sub(r'^\.', '', mimetypes.guess_extension(result['mimetype']))
-            #logmessage("get_info_from_file_reference: extension is " + str(result['extension']))
+            # logmessage("get_info_from_file_reference: extension is " + str(result['extension']))
         if re.search(r'\.', possible_filename):
             result['filename'] = possible_filename
         else:
@@ -169,10 +130,10 @@ def get_info_from_file_reference(file_reference, **kwargs):
         path_parts = os.path.splitext(result['fullpath'])
         result['path'] = path_parts[0]
         has_info = True
-        #logmessage("get_info_from_file_reference: downloaded to " + str(result['fullpath']))
+        # logmessage("get_info_from_file_reference: downloaded to " + str(result['fullpath']))
     else:
-        #logmessage(str(file_reference) + " is not a URL")
-        result = dict()
+        # logmessage(str(file_reference) + " is not a URL")
+        result = {}
         question = kwargs.get('question', None)
         manual_package = kwargs.get('package', None)
         folder = kwargs.get('folder', None)
@@ -194,42 +155,43 @@ def get_info_from_file_reference(file_reference, **kwargs):
             if folder is not None and not re.search(r'/', file_reference):
                 file_reference = 'data/' + str(folder) + '/' + file_reference
             if the_package is not None:
-                #logmessage("package is " + str(the_package))
+                # logmessage("package is " + str(the_package))
                 file_reference = the_package + ':' + file_reference
             else:
-                #logmessage("package was null")
+                # logmessage("package was null")
                 file_reference = 'docassemble.base:' + file_reference
             if the_package is not None:
                 result['package'] = the_package
         elif len(parts) == 2:
             result['package'] = parts[0]
         result['fullpath'] = docassemble.base.functions.static_filename_path(file_reference)
-    # sys.stderr.write("path is " + str(result['fullpath']) + "\n")
-    if result['fullpath'] is not None: #os.path.isfile(result['fullpath'])
+    # logmessage("path is " + str(result['fullpath']))
+    if result['fullpath'] is not None:  # os.path.isfile(result['fullpath'])
         if not has_info:
             result['filename'] = os.path.basename(result['fullpath'])
-            ext_type, result['mimetype'] = get_ext_and_mimetype(result['fullpath'])
+            ext_type, result['mimetype'] = get_ext_and_mimetype(result['fullpath'])  # pylint: disable=unused-variable
             path_parts = os.path.splitext(result['fullpath'])
             result['path'] = path_parts[0]
             result['extension'] = path_parts[1].lower()
             result['extension'] = re.sub(r'\.', '', result['extension'])
-        #logmessage("Extension is " + result['extension'])
+        # logmessage("Extension is " + result['extension'])
         if convert is not None and result['extension'] in convert:
-            #logmessage("Converting...")
+            # logmessage("Converting...")
             if os.path.isfile(result['path'] + '.' + convert[result['extension']]):
-                #logmessage("Found conversion file ")
+                # logmessage("Found conversion file ")
                 result['extension'] = convert[result['extension']]
                 result['fullpath'] = result['path'] + '.' + result['extension']
                 ext_type, result['mimetype'] = get_ext_and_mimetype(result['fullpath'])
             else:
-                sys.stderr.write("Did not find file " + result['path'] + '.' + convert[result['extension']] + "\n")
-                return dict()
-        #logmessage("Full path is " + result['fullpath'])
+                logmessage("Did not find file " + result['path'] + '.' + convert[result['extension']])
+                return {}
+        # logmessage("Full path is " + result['fullpath'])
         if os.path.isfile(result['fullpath']) and not has_info:
             add_info_about_file(result['fullpath'], result['path'], result)
     else:
-        sys.stderr.write("File reference " + str(file_reference) + " DID NOT EXIST.\n")
-    return(result)
+        logmessage("File reference " + str(file_reference) + " DID NOT EXIST.")
+    return result
+
 
 def safe_pypdf_reader(filename):
     try:
@@ -238,12 +200,13 @@ def safe_pypdf_reader(filename):
         new_filename = tempfile.NamedTemporaryFile(prefix="datemp", mode="wb", suffix=".pdf", delete=False)
         qpdf_subprocess_arguments = [QPDF_PATH, filename, new_filename.name]
         try:
-            result = subprocess.run(qpdf_subprocess_arguments, timeout=60).returncode
+            result = subprocess.run(qpdf_subprocess_arguments, timeout=60, check=False).returncode
         except subprocess.TimeoutExpired:
             result = 1
         if result != 0:
             raise Exception("Call to qpdf failed for template " + str(filename) + " where arguments were " + " ".join(qpdf_subprocess_arguments))
         return PyPDF2.PdfFileReader(open(new_filename.name, 'rb'), overwriteWarnings=False)
+
 
 def add_info_about_file(filename, basename, result):
     if result['extension'] == 'pdf':
@@ -289,8 +252,8 @@ def add_info_about_file(filename, basename, result):
                     result['height'] = float(dimen[3]) - float(dimen[1])
         except:
             raise Exception("problem reading " + str(filename))
-            logmessage('add_info_about_file: could not read ' + str(filename))
-    return
+            # logmessage('add_info_about_file: could not read ' + str(filename))
+
 
 def get_info_from_file_number(file_number, privileged=False, filename=None, uids=None):
     if current_user and current_user.is_authenticated and current_user.has_role('admin', 'developer', 'advocate', 'trainer'):
@@ -301,7 +264,7 @@ def get_info_from_file_number(file_number, privileged=False, filename=None, uids
             uids = [new_uid]
         else:
             uids = []
-    result = dict()
+    result = {}
     upload = db.session.execute(select(Uploads).filter_by(indexno=file_number)).scalar()
     if not privileged and upload is not None and upload.private and upload.key not in uids:
         has_access = False
@@ -325,7 +288,7 @@ def get_info_from_file_number(file_number, privileged=False, filename=None, uids
         result['fullpath'] = result['path'] + '.' + result['extension']
         result['private'] = upload.private
         result['persistent'] = upload.persistent
-        #logmessage("fullpath is " + str(result['fullpath']))
+        # logmessage("fullpath is " + str(result['fullpath']))
     if 'path' not in result:
         logmessage("get_info_from_file_number: path is not in result for " + str(file_number))
         return result
@@ -334,4 +297,4 @@ def get_info_from_file_number(file_number, privileged=False, filename=None, uids
         add_info_about_file(final_filename, result['path'], result)
     # else:
     #     logmessage("Filename " + final_filename + "did not exist.")
-    return(result)
+    return result

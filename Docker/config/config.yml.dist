@@ -1,7 +1,12 @@
-debug: True
-enable playground: True
-allow demo: True
+debug: {{DADEBUG}}
+enable playground: {{DAENABLEPLAYGROUND}}
+allow log viewing: {{DAALLOWLOGVIEWING}}
+root owned: {{DAROOTOWNED}}
+allow demo: {{DADEBUG}}
 exitpage: https://docassemble.org
+supervisor:
+  username: {{DASUPERVISORUSERNAME}}
+  password: {{DASUPERVISORPASSWORD}}
 db:
   prefix: {{DBPREFIX}}
   name: {{DBNAME}}
@@ -9,6 +14,10 @@ db:
   password: {{DBPASSWORD}}
   host: {{DBHOST}}
   port: {{DBPORT}}
+  ssl mode: {{DBSSLMODE}}
+  ssl cert: {{DBSSLCERT}}
+  ssl key: {{DBSSLKEY}}
+  ssl root cert: {{DBSSLROOTCERT}}
   table prefix: {{DBTABLEPREFIX}}
   backup: {{DBBACKUP}}
 oauth:
@@ -64,7 +73,7 @@ celery processes: {{DACELERYWORKERS}}
 voicerss:
   enable: False
   key: ae8734983948ebc98239e9898f998432
-  languages:
+  dialects:
     en: us
     es: mx
     fr: fr
@@ -75,6 +84,11 @@ s3:
   bucket: {{S3BUCKET}}
   region: {{S3REGION}}
   endpoint url: {{S3ENDPOINTURL}}
+  server side encryption:
+    algorithm: {{S3_SSE_ALGORITHM}}
+    customer algorithm: {{S3_SSE_CUSTOMER_ALGORITHM}}
+    customer key: {{S3_SSE_CUSTOMER_KEY}}
+    KMS key ID: {{S3_SSE_KMS_KEY_ID}}
 azure:
   enable: {{AZUREENABLE}}
   account name: {{AZUREACCOUNTNAME}}
@@ -93,6 +107,7 @@ behind https load balancer: {{BEHINDHTTPSLOADBALANCER}}
 xsendfile: {{XSENDFILE}}
 update on start: {{DAUPDATEONSTART}}
 allow updates: {{DAALLOWUPDATES}}
+allow configuration editing: {{DAALLOWCONFIGURATIONEDITING}}
 url root: {{URLROOT}}
 external hostname: {{DAHOSTNAME}}
 expose websockets: {{DAEXPOSEWEBSOCKETS}}
@@ -105,7 +120,9 @@ allow non-idempotent questions: False
 restrict input variables: True
 web server: {{DAWEBSERVER}}
 new markdown to docx: True
+new template markdown behavior: True
 stable version: {{DASTABLEVERSION}}
 sql ping: {{DASQLPING}}
 default icons: font awesome
 config from: {{CONFIGFROM}}
+enable unoconv: {{ENABLEUNOCONV}}

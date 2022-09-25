@@ -1,6 +1,6 @@
-import psutil
-import time
 import sys
+import time
+import psutil
 
 busy_pids = set()
 index = 0
@@ -19,7 +19,7 @@ while True:
     index = index % 6
     if index == 5:
         for pid in busy_pids:
-            if not pid in busy_now:
+            if pid not in busy_now:
                 no_longer_busy.add(pid)
         for pid in no_longer_busy:
             busy_pids.discard(pid)

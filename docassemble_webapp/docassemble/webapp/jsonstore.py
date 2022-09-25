@@ -1,18 +1,19 @@
-from docassemble.base.config import daconfig
-from sqlalchemy import Column, ForeignKey, Boolean, Integer, String, Text, DateTime, func, create_engine, or_, and_, true, false, delete, select
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, sessionmaker
-from sqlalchemy.dialects.postgresql.json import JSONB
-import sys
-from docassemble.base.functions import server
 import datetime
+from docassemble.base.config import daconfig
+from docassemble.base.functions import server
+from docassemble.webapp.core.models import JsonStorage as CoreJsonStorage
+import docassemble.webapp.db_object
+from sqlalchemy import Column, Boolean, Integer, String, Text, DateTime, func, create_engine, false, delete, select
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.dialects.postgresql.json import JSONB
 
 custom_db = daconfig.get('variables snapshot db', None)
 
 if custom_db is None:
-    from docassemble.webapp.core.models import JsonStorage
-    import docassemble.webapp.db_object
     JsonDb = docassemble.webapp.db_object.db.session
+    JsonStorage = CoreJsonStorage
+
     def variables_snapshot_connection():
         return docassemble.webapp.db_object.db.engine.raw_connection()
 else:
@@ -44,10 +45,11 @@ else:
 
     def variables_snapshot_connection():
         return engine.raw_connection()
-    
+
+
 def read_answer_json(user_code, filename, tags=None, all_tags=False):
     if all_tags:
-        entries = list()
+        entries = []
         for entry in JsonDb.execute(select(JsonStorage).filter_by(filename=filename, key=user_code, tags=tags)).scalars():
             entries.append(dict(data=entry.data, tags=entry.tags, modtime=entry.modtime))
         return entries
@@ -55,6 +57,7 @@ def read_answer_json(user_code, filename, tags=None, all_tags=False):
     if existing_entry is not None:
         return existing_entry.data
     return None
+
 
 def write_answer_json(user_code, filename, data, tags=None, persistent=False):
     existing_entry = JsonDb.execute(select(JsonStorage).filter_by(filename=filename, key=user_code, tags=tags).with_for_update()).scalar()
@@ -66,6 +69,7 @@ def write_answer_json(user_code, filename, data, tags=None, persistent=False):
         new_entry = JsonStorage(filename=filename, key=user_code, data=data, tags=tags, persistent=persistent)
         JsonDb.add(new_entry)
     JsonDb.commit()
+
 
 def delete_answer_json(user_code, filename, tags=None, delete_all=False, delete_persistent=False):
     if delete_all:

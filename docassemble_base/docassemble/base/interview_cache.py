@@ -1,6 +1,7 @@
 import docassemble.base.parse
 
-cache = dict()
+cache = {}
+
 
 def get_interview(path):
     if path is None:
@@ -14,11 +15,13 @@ def get_interview(path):
         the_interview = interview_source.get_interview()
         the_interview.from_cache = False
         cache[interview_source.path] = {'index': interview_source.get_index(), 'interview': the_interview, 'source': interview_source}
-    return(the_interview)
+    return the_interview
+
 
 def clear_cache(path):
     if path in cache:
         del cache[path]
+
 
 def cache_valid(questionPath):
     if questionPath in cache and cache[questionPath]['index'] == cache[questionPath]['source'].get_index():

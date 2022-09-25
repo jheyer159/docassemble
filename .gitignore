@@ -1,4 +1,6 @@
 *~
+.mypy_cache/*
+.vscode
 .#*
 *.pyc
 en
@@ -54,3 +56,9 @@ cleanup.sh
 docassemble_webapp/docassemble/webapp/static/index.html
 docassemble_webapp/docassemble/webapp/static/css
 docassemble_webapp/docassemble/webapp/static/js
+.history/
+settings.json
+*/.mypy_cache
+.idea
+.dir-locals.el
+.flake8

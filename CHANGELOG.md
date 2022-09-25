@@ -1,5 +1,742 @@
 # Change Log
 
+## [1.4.9] - 2022-09-10
+
+### Added
+- The `voices` option of the `voicerss` Configuration.
+- The `voice` keyword parameter of the `set_language()` function.
+- The `auto login` Configuration directive.
+- The `output_to` keyword parameter of the `.convert_to()` method of `DAFile`.
+- The `output_to` keyword parameter of the `.export()` method of
+  `DALazyTableTemplate`.
+- The `output_to` keyword parameter of `pdf_concatenate()`,
+  `docx_concatenate()`, `zip_file()`, `overlay_pdf()`.
+- The `extract_pages()` method of `DAFile`.
+### Changed
+- If an attempt is made to access the contents of a `DAFile` that is
+  not yet initialized, the `.initialized` attribute will be
+  sought. The `.initialize()` method sets `.initialized` to
+  `True`. Thus, if you have a `code` block that calls `.initialize()`
+  on a `DAFile` called `myfile`, you can attach `sets:
+  myfile.initialized` to the `code` block and it will be called upon
+  if the interview logic requires the contents of `myfile`.
+- When an `attachment` that has a `name` creates a `DAFileCollection`
+  object, the `DAFile` attributes will have their `alt_text` set to
+  the `name` followed by the file type in parentheses.
+### Fixed
+- Adjusted the `Dockerfile` so that the server can start up even if
+  the internet is not available.
+
+## [1.4.8] - 2022-08-25
+
+### Fixed
+- Google Analytics JavaScript was being called in a way that used to
+  work but does not work anymore.
+
+## [1.4.7] - 2022-08-24
+
+### Added
+- The `module whitelist` and `module blacklist` Configuration
+  directives.
+- The `user profile fields` Configuration directive.
+### Changed
+- The `SQLObject` methods were changed so that they will raise
+  exceptions if there is an unexpected error.
+- Upgraded jQuery Validation Plugin.
+### Fixed
+- Fixes to multifactor authentication to make configuration easier.
+- JavaScript issues with comboboxes.
+
+## [1.4.6] - 2022-08-13
+
+### Fixed
+- Backwards-compatibility issue involving `backports.zoneinfo`. This
+  is an important fix if you upgraded your system version from 1.3.x
+  to 1.4.x.
+
+## [1.4.5] - 2022-08-11
+
+### Fixed
+- Exception raised due to interaction of `SQLObject` and
+  `create_session()`.
+
+## [1.4.4] - 2022-08-11
+
+### Fixed
+- Bug with default values that evaluate to the empty string.
+
+## [1.4.3] - 2022-08-09
+
+### Fixed
+- Bug in User List interface.
+
+## [1.4.2] - 2022-08-08
+
+### Fixed
+- Unicode characters in the `id` of a `question` were not sent to the
+  browser as Unicode.
+
+## [1.4.1] - 2022-08-05
+
+### Changed
+- Upgraded `docxtpl`.
+### Fixed
+- Problem with restarting the server when using a single-server
+  configuration.
+
+## [1.4.0] - 2022-07-31
+
+### Added
+- The `floating labels` feature and the `floating label` field
+  modifier.
+- The `root owned` Configuration directive.
+- Support in the Kubernetes implementation for using a read-only file
+  system where all Configuration changes and package updates take
+  place using Docker images and the only directories on the server
+  that are writable are directories for storing runtime information
+  (e.g. PID files) or log files.
+- The `ip address ban enabled` Configuration directive.
+- The `old_password` parameter for `set_user_info()` and the API
+  endpoints for changing user information, so that the user's
+  encrypted data can be migrated.
+- The `transform_json_variables()` function.
+- Support for server-side encryption when using S3.
+### Changed
+- In the Docker container, the operating system is upgraded to Ubuntu
+  22.04 LTS and Python is upgraded to 3.10.
+- `aloe` is no longer a required package. It has a dependency, `nose`,
+  that is not compatible with Python 3.10. Instead, `behave` is now a
+  required package.
+- Switched to the Azure CLI for managing files in Azure Blob Storage
+  from shell scripts.
+- A restart (e.g., saving the Configuration, installing a package)
+  will erase any IP address bans caused by failed login attempts.
+- The API endpoints for changing information about existing users now
+  work with `PATCH` as well as `POST`.
+### Fixed
+- Links in dropdown navigation menu for mobile devices were not
+  clickable.
+- The `session` parameter of `/api/resume_url` was not working (it was
+  expecting `session_id`.
+- Optimized `interview_list` for cases where `action='delete_all'` and
+  `query` are used together.
+- Unnecessary transmittal of background task result to web browser
+  when the `refresh` option of `background_action()` is used.
+- Migration of encrypted `DAStore` objects when password is changed.
+- The `set_parts()` function did not support all of the screen parts.
+
+## [1.3.52] - 2022-07-08
+
+### Changed
+- Upgraded `atomicwrites`.
+
+## [1.3.51] - 2022-06-18
+
+### Changed
+- Upgraded jQuery to 3.6.0.
+### Fixed
+- Fixed issue with comboboxes introduced in 1.3.50.
+
+## [1.3.50] - 2022-06-11
+
+### Added
+- The `enable shared playgrounds` Configuration directive.
+### Changed
+- Upgraded to Font Awesome 6.1.1.
+### Fixed
+- In a list of fields in a `review` screen item, the `invalidate`
+  command was not available.
+
+## [1.3.49] - 2022-06-09
+
+### Added
+- Example interviews relating to inserting graphs and cards.
+### Changed
+- Changed the name of the `explanation()` function to
+  `logic_explanation()`. NOTE THAT THIS IS A BREAKING CHANGE. However,
+  you are most likely not using the `explanation()` function, so this
+  probably will not matter.
+### Fixed
+- Cleared spurious syslog-ng error message.
+- Error getting the data format of a question when `debug` is false.
+
+## [1.3.48] - 2022-06-05
+### Fixed
+- Error with user profile screen.
+
+## [1.3.47] - 2022-06-04
+### Fixed
+- Error parsing hostname from Redis URL.
+- Number of items not preserved when pressing Back button and arriving
+  at a `list collect` question.
+
+## [1.3.46] - 2022-06-03
+### Added
+- The `allow log viewing` (`DAALLOWLOGVIEWING`) Configuration
+  directive.
+- The `forget_prior` keyword parameter for `force_ask()` and
+  `force_gather()`.
+- The `_forget_prior` keyword parameter for `url_action()` and
+  `interview_url_action()`.
+- The `forgetPrior` parameter for the JavaScript functions
+  `url_action()`, `action_call()`, and `action_perform()`.
+- The `logoutpage` Configuration directive.
+- The `allow changing password` directive.
+### Changed
+- Upgraded to Bootstrap 5.2.
+- The `interview_url()` and `url_of('interview')` functions now accept
+  unqualified `i` parameters, which will be interpreted as references
+  to interview files in the current package.
+### Fixed
+- The HTML version of the error notification e-mail lacked some of the
+  information in the plain text version.
+- The `next` parameter of `url_of()` was not functional for `leave`,
+  `logout`, `exit`, and `exit_logout`.
+
+## [1.3.45] - 2022-05-27
+### Added
+- The `pip index url` (`PIPINDEXURL`) and `pip extra index urls`
+  (`PIPEXTRAINDEXURLS`) Configuration directives.
+- The `allow configuration editing` (`DAALLOWCONFIGURATIONEDITING`)
+  Configuration directive.
+- Docker environment variables `DADEBUG` (corresponding to `debug`)
+  and `DAENABLEPLAYGROUND` (corresponding to `enable playground`).
+- The `insertion_order` option for `.true_values()` and
+  `.false_values()`.
+### Changed
+- API keys can now be passed in a header using the format
+  `Authorization: Bearer H3PLMKJKIVATLDPWHJH3AGWEJPFU5GRT`.
+- Removed `pathlib` as a dependency.
+- If `allow updates` is set to false, the `/api/package` endpoint
+  cannot be used to install or uninstall packages.
+- If `enable playground` is set to false, the Playground-related APIs
+  are disabled.
+### Fixed
+- When a `yesnoradio` or `yesnomaybe` field is not `required` and is
+  not answered, the variable will now be set to `None` instead of
+  `False`. THIS MAY BE A BREAKING CHANGE FOR YOU if you relied on
+  variables being set to `False` when the user did not provide a value
+  for a `yesnoradio` or `yesnomaybe` field. The documentation for
+  `required` has always stated that the variable will be set to `None`
+  if the user does not provide a value, so this change brings the code
+  into line with the documentation.
+- Error when `target_number` is not an `int` and an `.add_action()` is
+  triggered.
+- `docassemble.base.legal` did not import all of
+  `docassemble.base.util`'s names.
+- `set` and `follow up` were not recognized in all valid `review`
+  block syntax forms.
+- The `to` parameter of `send_email()` and `send_sms()` did not
+  process a `DAList` the same way as a `list`.
+- Under some circumstances, the navigation bar showed already-visited
+  sections as not visited.
+- `error action`s resulted in unnecessary contention for access to the
+  interview answers.
+
+## [1.3.44] - 2022-05-16
+### Added
+- The `temp_url` variant of `url_of()`, which functions like the
+  `/api/temp_url` API endpoint.
+- The `login_url` variant of `url_of()`, which functions like the
+  `/api/login_url` API endpoint.
+- The `overwrite` parameter for `/api/session/action`.
+- The `run_action_in_session()` function.
+- A Jinja2 filter called `chain` that concatenates lists or other
+  iterables (`itertools.chain`).
+### Changed
+- The `/goto` and `/auto_login` endpoints return a blank page if the
+  `User-Agent` header indicates that the HTTP client is a bot.
+### Fixed
+- Added a color conversion strategy to Ghostscript for PDF/A
+  compliance.
+
+## [1.3.43] - 2022-05-11
+### Changed
+- Accessibility improvements.
+
+## [1.3.42] - 2022-05-10
+### Fixed
+- Error in `set_session_variables()`.
+
+## [1.3.41] - 2022-05-09
+### Fixed
+- `action buttons` were not called using Ajax.
+- `response()` was not functional when called from an action via Ajax.
+
+## [1.3.40] - 2022-05-05
+### Fixed
+- Logged-in user could not delete own interview session using
+  `interview_list()` without special permissions.
+
+## [1.3.39] - 2022-04-30
+### Changed
+- Calling `all_variables(simplify=False, include_internal=False)` now
+  omits `_internal`.
+- The HTML now uses `required` and `aria-required="true"` to indicate
+  required fields.
+### Fixed
+- `interview_url()` can now receive `session` without also receiving
+  `i` and `i` will be set to the current filename without overwriting
+  `session`.
+- Calling `create_session()` and other functions for manipulating
+  other sessions could disrupt `_internal` variables in some
+  circumstances.
+- `url_ask()` can now begin with an action.
+- Error in session deletion that caused sessions not to be deleted in
+  some circumstances.
+
+## [1.3.38] - 2022-04-28
+### Changed
+- The `permissions` system can now give privileges to `anonymous`
+  (non-logged in) users.
+### Fixed
+- Error with new Playground initialization.
+
+## [1.3.37] - 2022-04-25
+### Fixed
+- Error with user registration.
+
+## [1.3.36] - 2022-04-23
+### Fixed
+- Error with background tasks.
+- Minor user experience issues in Playground.
+
+## [1.3.35] - 2022-04-20
+### Added
+- Recipe for creating appointment invitations.
+### Fixed
+- Error with implicit instantiation of dictionary keys after certain
+  uses of `defined()` or `showifdef()`.
+- Issue with populating default values in `time` fields.
+- Error with obtaining API keys for non-`admin` users.
+
+## [1.3.34] - 2022-04-19
+### Fixed
+- Error that interferes with package updates.
+
+## [1.3.33] - 2022-04-19
+### Fixed
+- Error introduced in 1.3.32 with filenames on download.
+
+## [1.3.32] - 2022-04-19
+
+### Added
+- The `DAGlobal` class.
+### Changed
+- Upgraded dependencies.
+### Fixed
+- Issue with CSS classes and `disable others`.
+
+## [1.3.31] - 2022-04-13
+
+### Fixed
+- Bug in `delete_all` feature of `interview_list()`.
+
+## [1.3.30] - 2022-04-10
+
+### Added
+- The `query` option for `interview_list()` and API endpoints like
+  `/api/interviews`.
+- Recipes for setting screen parts and watermarking Markdown-to-PDF
+  files.
+- The `raw_result` keyword parameter for `ocr_file()` and
+  `ocr_file_in_background()` when used with Google Cloud Vision.
+### Changed
+- SQL tables now use a uniqueness constraint on primary key columns.
+- Errors with bookmarks in PDF templates will be ignored instead of
+  raising exceptions.
+### Fixed
+- Problem with the processing of `metadata` in the Markdown-to-PDF
+  feature.
+- Issue with `__getattr__()` causing objects to be created as a result
+  of testing for their existence.
+
+## [1.3.29] - 2022-04-07
+### Added
+- The option for using Google Cloud Vision when using `ocr_file()` and
+  `ocr_file_in_background()`.
+### Changed
+- When `new template markdown behavior: True` is set in the
+  Configuration (which is now part of the default initial
+  configuration), `template` variables do not have the `markdown`
+  filter automatically applied when they are used in a DOCX template
+  file. It is recommended that you add this to your Configuration,
+  and then modify your `docx template file` templates that use
+  `template` variables, adding ` | markdown` if necessary.
+### Fixed
+- Improved efficiency of system shutdown. (Requires a system upgrade.)
+- Problem with Let's Encrypt certificates not renewing. (Requires a
+  system upgrade.)
+- The `single_worker.log` file was missing from log rotation.
+- Erroneous exceptions could be raised if a `DAObject` attribute name
+  began with `_`. Attributes can begin with `_` but they cannot begin
+  with `__`.
+- The `DBSSLMODE`, `DBSSLCERT`, `DBSSLKEY`, and `DBSSLROOTCERT`
+  variables were not affected by `ENVIRONMENT_TAKES_PRECEDENCE`.
+
+## [1.3.28] - 2022-03-26
+### Added
+- The `default language` specifier in `metadata`.
+- Recipe for running reports.
+### Fixed
+- Some functions did not work in `on change` code.
+- UI issue with comboboxes.
+
+## [1.3.27] - 2022-03-20
+### Changed
+- Favicons not present will not be referenced in HTML.
+
+## [1.3.26] - 2022-03-19
+### Added
+- The `favicon tile color` Configuration directive.
+- The `favicon version` Configuration directive.
+### Changed
+- Favicon feature now uses the package version number when available.
+- Favicon feature now supports `site.webmanifest`.
+- Additional logging during server restart.
+- UI accessibility improvements.
+### Fixed
+- Problem importing unclassified machine learning entries from JSON.
+
+## [1.3.25] - 2022-03-16
+### Changed
+- `complete_attribute` can refer to a list of attributes.
+### Fixed
+- Markdown-to-HTML conversion was not being applied to the `pre` or
+  `submit` screen parts.
+- `[TARGET ...]` was not working in `html`.
+- Issues with the Training page.
+
+## [1.3.24] - 2022-03-14
+### Added
+- The `custom datatypes to load` directive under `features`.
+- The `set_variables()` function.
+- The `process_objects` parameter for `set_session_variables`.
+### Changed
+- Support for importing and exporting `datetime.date` and
+  `datetime.time` objects in the JSON representation of objects.
+- `input type: area` text boxes are resizable in both dimensions.
+### Fixed
+- Issue with `show if` and `labels above fields`.
+- Issues with using SSL for external PostgreSQL and Redis connections.
+
+## [1.3.23] - 2022-03-07
+### Changed
+- Upgraded CodeMirror.
+### Fixed
+- Error with `overlay_pdf()` introduced in the last version.
+
+## [1.3.22] - 2022-03-05
+### Added
+- The `permissions` Configuration directive.
+- Ability of `admin` users to create API keys with limited permissions.
+- The `multi` option of `overlay_pdf()`.
+- The `/api/user_invite` API endpoint.
+- The `api key` option of `default admin account`.
+- The `allow forgot password` Configuration directive.
+### Changed
+- Upgraded the `boto3` and `docxtpl` libraries.
+- The Logs are now shown in a resizable `<textarea>`.
+- Safer implementation of `exit link` and `exit url`.
+- For safety reasons, `url_of('exit')` and similar URLs no longer
+  accept `next` parameters.
+- The JavaScript for `CustomDataType` objects will only be inserted if
+  the interview uses the custom datatype.
+### Fixed
+- URL of exit link was being set to `/interview` in some
+  circumstances.
+- When server-side validation failed, the fields the user saw on the
+  next screen were not always populated with the user's answers.
+- HTML typos in `<form>` elements.
+- Problem converting DOCX to PDF when `attachment` filename contained
+  a space.
+- Inaccurate exceptions were sometimes raised when `AttributeError` or
+  `IndexError` exceptions arise during assembly of a DOCX file.
+- Fixes to Google geocoding for situations where the latitude and
+  longitude are undefined.
+
+## [1.3.21] - 2022-02-05
+### Added
+- The `fax provider` Configuration directive.
+- Option for faxing with Telnyx instead of ClickSend.
+### Changed
+- The server name of a `DAFile` can be changed using `.set_attributes()`.
+- NLTK data files are downloaded during the building of the Docker
+  image, so that the initial boot process does not require an internet
+  connection.
+
+## [1.3.20] - 2022-01-25
+### Fixed
+- Error with the `.convert_to()` method of `DAFile`.
+- Issue with display of modules in the Playground variables.
+
+## [1.3.19] - 2022-01-17
+### Fixed
+- Issue with the sizing of images inside of `terms` descriptions.
+
+## [1.3.18] - 2022-01-15
+### Added
+- Support for using `md` as one of the `valid formats` in an
+  `attachment` when using `content` or `content file`.
+- The `enable unoconv` Configuration directive (requires system
+  upgrade). This provides a faster method for converting DOCX files to
+  PDF.
+### Fixed
+- When `raw: True` was enabled for an `attachment`, the file was not
+  included in e-mails sent from the user interface of the `attachment`
+  block.
+- When `raw: True` was enabled for an `attachment`, and the
+  `DAFileCollection` was passed to `send_email()` or `send_sms()`, the
+  assembled file was not included.
+- Fixed error from 1.3.17 relating to updating references.
+
+## [1.3.17] - 2022-01-13
+### Changed
+- Environment variable for S3 region for use in shell scripts.
+
+## [1.3.16] - 2022-01-08
+### Changed
+- Security updates to dependencies.
+### Fixed
+- Better support for including a variety of image types in documents
+  by converting the image type to PNG or EPS as appropriate.
+- Problem with order of table model module loading.
+
+## [1.3.15] - 2022-01-06
+### Added
+- The `TestContext` object for testing **docassemble** code from the
+  command line.
+- The `.pngs_ready()` and `.page_path()` methods of `DAFile`, for use
+  when the `DAFile` is a PDF.
+- The `page` and `size` parameters for the `.url_for()` method of
+  `DAfile`, for use when the `DAFile` is a PDF.
+- The `authorized registration domains` Configuration directive.
+### Fixed
+- CSS error in active subsection headings.
+- Error with getting status of background tasks.
+- Error with videos included using `[FILE]`.
+- Some API keys would not authenticate.
+- Error with DAGoogleAPI.
+
+## [1.3.14] - 2021-12-28
+### Fixed
+- Error in 1.3.11 related to Upgrade button.
+
+## [1.3.13] - 2021-12-28
+### Fixed
+- Error in 1.3.11 related to oauth logins.
+
+## [1.3.12] - 2021-12-27
+### Fixed
+- Error in 1.3.11 related to ClickSend.
+
+## [1.3.11] - 2021-12-27
+### Changed
+- API keys can now only be viewed when initially obtained.
+- Code that runs when a module is loading now runs in a context where
+  the original `admin` user is logged in.
+### Fixed
+- Bootstrap typo affecting alignment of dropdown menu.
+- Issue with machine learning sometimes returning no results when results exist.
+
+## [1.3.10] - 2021-12-16
+### Changed
+- In the Playground, pressing buttons is disabled during Ajax
+  requests.
+- The Playground "Pull" process now uses SSH to clone repositories
+  when GitHub integration is enabled, unless a personal access token
+  is embedded in the URL.
+### Fixed
+- CSS error resulting in certain validation errors being invisible on
+  administrative pages.
+
+## [1.3.9] - 2021-12-11
+### Added
+- The `/api/playground_pull` endpoint for pulling a package into a
+  Playground.
+- The `/api/config` PATCH endpoint for updating specific Configuration
+  directives.
+- The `/api/restart` endpoint for triggering a server restart.
+- The `/api/restart_status` endpoint for monitoring the status of a
+  server restart.
+### Changed
+- The `/api/config` API endpoint now returns status code 200 on
+  success, not 204. The response contains a code that can be passed to
+  `/api/restart_status` to check on the status of the restart.
+- The `/api/playground` POST and DELETE endpoints will now return
+  status code 200 instead of 204 if the server needs to restart.  The
+  response contains a code that can be passed to `/api/restart_status`
+  to check on the status of the restart.
+### Fixed
+- NGINX configuration syntax.
+- Better error message if Celery is used inside of Celery.
+- Gave the single Celery process a unique name.
+- Adjust for situation where Ajax request fails without a response.
+- Fixed JavaScript errors in some Playground pages.
+- Fixed issue where GitHub SSH only worked during a Playground pull if
+  there was an active package.
+- Miscellaneous undefined variables in rarely-run code.
+
+## [1.3.8] - 2021-12-05
+### Fixed
+- Issues with `show if` and `list collect`.
+
+## [1.3.7] - 2021-12-04
+### Added
+- The `footer css class` Configuration directive.
+### Changed
+- Upgraded `pip` from 20.1.1 to 21.1. Previously, `pip` had been
+  deliberately downgraded because the new resolver caused `pip` to
+  hang. Hopefully that issue does not appear again.
+- The `docassemble-os` Docker repository, which is a dependency of
+  this Docker repository, is now based on Ubuntu 21.10 rather than
+  Debian `testing`.
+### Fixed
+- Bug related to deleting Playground "projects" when S3 or Azure blob
+  storage is enabled.
+- Improved method for detecting variable names in Jinja2 files.
+- Increased threshold for detecting whether a server has become
+  unresponsive during the restart process.
+
+## [1.3.6] - 2021-11-26
+### Fixed
+- Adjustments to behavior of `skip undefined` with DOCX files.
+- Security update of `reportlab` dependency; incorporated `marisol`
+  into `docassemble.base` because of conflicting dependency.
+
+## [1.3.5] - 2021-11-13
+### Added
+- Data parameters for `CustomDataType`.
+- The `css class` field modifier.
+### Fixed
+- Adjusted CSS to fix navigation bar and required field CSS issues on
+  small screens.
+- Prevented the enter key from submitting the form in the Playground.
+
+## [1.3.4] - 2021-11-11
+### Changed
+- Upgraded from Bootstrap 4 to Bootstrap 5. This changes the HTML and
+  CSS significantly, so you may need to adjust your customizations and
+  testing scripts.  Bootstrap 5 is not necessarily more "attractive"
+  than Bootstrap 4, but it has better accessibility.
+- The Source tab is now represented by a "code" icon.
+- The administrative UI was adjusted for consistency.
+- Changed the appearance of help on field labels.
+
+## [1.3.3] - 2021-11-07
+### Added
+- The `short logo` screen part for specifying a different `logo` for
+  small screens.
+- The `navigation bar html` screen part for adding HTML to the
+  navigation bar.
+- The `_screen_size` option for `action_menu_item()` for hiding menu
+  items depending on the screen size.
+### Fixed
+- Decreased the `max-width` of the interview title in the navigation
+  bar to avoid problems with the navigation bar wrapping onto two
+  lines.
+
+## [1.3.2] - 2021-11-06
+### Added
+- The `DABreadCrumbs` class for displaying a breadcrumbs UI to the
+  user when the current question is the result of a nested action.
+
+## [1.3.1] - 2021-11-05
+### Added
+- The `button colors` Configuration directive for customizing the
+  Bootstrap colors of buttons.
+- The `label above field` modifer that puts the label above the field
+  for a specific field, which is preferable to using `no label` in
+  combination with a `note`.
+- The `login link style` Configuration directive for enabling
+  separate "Sign up" and "Sign in" buttons in the upper right corner
+  instead of "Sign in or sign up to save answers."
+### Changed
+- Changed the default color of `review` screen edit buttons and the
+  "add another" button from Bootstrap `success` (green) to `secondary`
+  (grey).
+- Added the Font Awesome pencil icon to `review` screen edit buttons.
+- Substituted a different Font Awesome icon for the selected radio
+  button option so that it is not the same as the icon for a selected
+  checkbox option.
+- Changed the left arrow icon in the "back to question" button so that
+  it matches the left arrow icon of "Back."
+- Added a light grey background color behind `review` screen `button`
+  items to help differentiate the sections of a review screen.
+- When `question help button` is used, the question-related help now
+  appears below the buttons, and the navigation bar help only
+  displays the `interview help` (if present).
+- The `skip undefined` option now works with `docx template file`.
+### Fixed
+- Inactive sections in the `sections` sidebar are no longer `<a>`
+  elements that screen readers may describe as clickable.
+
+## [1.2.108] - 2021-10-29
+### Fixed
+- On reset, kill zombie LibreOffice processes that might prevent
+  DOCX-to-PDF conversion from succeeding on the server.
+- Changed order of backup to prioritize file storage over logs in case
+  shutdown process is terminated.
+
+## [1.2.107] - 2021-10-26
+### Fixed
+- Problem with spinner staying on the screen after certain types of URL
+  redirects.
+
+## [1.2.106] - 2021-10-22
+### Fixed
+- Fix to the filename security adjustment in 1.2.105.
+
+## [1.2.105] - 2021-10-18
+### Added
+- ClickSend fax support.
+### Changed
+- Additional bracket expressions now valid with Jinja2 `markdown`
+  filter.
+- The blockquote Markdown format now indented on right and
+  single-spaced when used the the Jinja2 `markdown` filter.
+- Filename security in the Playground now allows reading existing
+  Playground files with names that contain spaces, although the
+  filename will be changed.
+
+## [1.2.104] - 2021-10-11
+### Fixed
+- Issue with counting SQL results for non-admin developers.
+
+## [1.2.103] - 2021-10-07
+### Fixed
+- `check in` actions were not aware of the current `x`, `i`, `j`, etc.
+- Population of fields by address autocomplete did not trigger the
+  `change` event on the fields.
+
+## [1.2.102] - 2021-09-28
+### Changed
+- Added a check during startup to see if PostgreSQL primary key
+  sequences have been reset and if so set their values to the maximum
+  value id in the table.
+### Fixed
+- Error getting JSON version of question involving `list collect`.
+
+## [1.2.101] - 2021-09-21
+### Fixed
+- `[BEGIN_CAPTION]` in HTML mode now behaves like `[BEGIN_TWOCOL]` in
+  that the columns are converted from Markdown and inserted in the
+  table as paragraphs.
+
+## [1.2.100] - 2021-09-14
+### Changed
+- Added descriptive log messages to `initialize` service.
+- Traceback now included in API when error message is "failure to
+  assemble interview."
+### Fixed
+- Issue with package update screen being unresponsive under some
+  conditions due to HTTP timeout.
+- Issue with duplicative entries in `install` table.
+- Default in multiple choice question not shown when selected value
+  was `None`.
+- Problem setting code-generated checkbox fields when `restrict input
+  variables` in effect.
+
 ## [1.2.99] - 2021-08-30
 ### Changed
 - The `on_success` and `on_failure` parameters of `DAWeb` methods can
